@@ -9,4 +9,4 @@ NORA WENTZ - HSG-5232-A: PRGM ANIMATORS
 
 LINK FOR VIDEO PROVIDED BELOW
 
-    https://www.youtube.com/watch?v=PgL07neHKT0S
+    https://www.youtube.com/watch?v=PgL07neHKT0
