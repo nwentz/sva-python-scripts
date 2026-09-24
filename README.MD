@@ -1,7 +1,0 @@
-NORA WENTZ - HSG-5232-A: PRGM ANIMATORS
-
-I took Route B and got my agent to generate a Big Foot customizable builder. There were numerous design problems from how the muscles and limbs weren't anatomically correct, to the fact that the earlier clipping issues made the model look incomprehensible. But the main flaw was the extra things the agent liked adding that, when translated to 3D with its primitive modeling capabilities, weren't necessary. It wanted the model to have a fur texture which I hadn't explicity asked for. It saw the reference image of Big Foot and decided that on its own. I wanted a "Simple design that a viewer could clearly see as Big Foot." I had the fur texture replaced with a plain lambert shader for color but the agent really wanted the fur so it took a while.
-
-YOUTUBE LINK PROVIDED BELOW
-
-https://www.youtube.com/watch?v=QZk7zF3LTEw
