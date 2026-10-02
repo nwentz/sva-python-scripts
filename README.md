@@ -11,7 +11,7 @@ Then to install pygame. Pip should already be pre-installed after your python in
 
 PIP INSTALL
 
-Windows Users: Use Powershell with the command: python3 -m ensurepip --default-pip
+Windows Users: Use Powershell with the command: python -m ensurepip
 
 Mac Users: Use Terminal with the command: python3 -m ensurepip --upgrade
 
@@ -31,14 +31,14 @@ PYGAME INSTALL
 pip install pygame
 
 
-Test to make sure pygame is working by entering the command: python3 -m pygame.examples.aliens
+Test to make sure pygame is working by entering the command: python -m pygame.examples.aliens
 
 This loads a pre-installed alien game. If you've got it, then you're set!
 
 
 RUNNING ARCADE BASEBALL
 
- To run this game "Arcade Baseball", run this command in a terminal: py -3.13 baseball_game.py
+ To run this game "Arcade Baseball", run this command in a terminal: python baseball_game.py
 
 
 
