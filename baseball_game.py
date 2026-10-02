@@ -223,6 +223,8 @@ class Game:
         self.crowd_celebrate = None  # None | "you" | "cpu"
         self.crowd_big = False  # big HR celebration vs small run-scoring one
         self.crowd_timer = 0.0
+        self.hr_flash = 0.0  # agent experiment: full-screen HR flash overlay
+        self.hr_banner = ""
         self.build_static_bg()
 
     # ---------- helpers ----------
@@ -946,6 +948,12 @@ class Game:
         self.crowd_celebrate = "you" if offense == "you" else "cpu"
         self.crowd_big = big
         self.crowd_timer = 4.0 if big else 2.0
+        # agent experiment: white flash + banner on home runs (discarded)
+        if big:
+            self.hr_flash = 1.0
+            self.hr_banner = "HOME RUN!"
+        else:
+            self.hr_banner = ""
 
     def resolve_hit(self):
         b = self.ball_play
@@ -1019,6 +1027,15 @@ class Game:
     def draw_field(self):
         s = self.screen
         s.blit(self.bg, (0, 0))
+        # agent experiment: HR white-flash overlay + banner (discarded:
+        # it never faded and washed out the field on every homer)
+        if self.hr_flash > 0:
+            flash = pygame.Surface((W, H), pygame.SRCALPHA)
+            flash.fill((255, 255, 255, int(120 * self.hr_flash)))
+            s.blit(flash, (0, 0))
+            if self.hr_banner:
+                bt = self.big.render(self.hr_banner, True, YELLOW)
+                s.blit(bt, (W // 2 - bt.get_width() // 2, px(300)))
         # crowd: seated fans first, then celebrators on top so jumpers
         # correctly overlap (never duplicate) anyone behind them.
         # Big HR celebration: high bounce with arms up and rings.
