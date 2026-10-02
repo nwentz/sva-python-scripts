@@ -155,6 +155,9 @@ def resolve_hit(self):
             dur=2.6 if kind == "HR" else 1.8, batter_start=hstart)
 
 
+MY UNDO:
+
+I used git revert to undo the agent's experiment with adding a homerun celebration screen. I got rid of this as, after it showed up, it wouldn't go away without closing the game's window.
 
 
 
