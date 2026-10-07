@@ -1,0 +1,15 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "vscode": {
+        "type": "local",
+        // Replace <BRIDGE_DIR> with the folder holding these branch files,
+        // e.g. "C:\\Tools\\vscode-bridge\\vscode-bridge-mcp.mjs".
+        // (The install.ps1 script registers this automatically -- this file
+        // is only for manual setup.)
+        "command": ["node", "<BRIDGE_DIR>\\vscode-bridge-mcp.mjs"]
+      }
+    }
+  }
+}
