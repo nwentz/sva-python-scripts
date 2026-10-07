@@ -34,12 +34,12 @@ CLI: vscode-bridge.mjs ───────────────────
 
 Prerequisites on the new machine: **Node.js 18+**, **VSCode** (with the `code` CLI on PATH), **OpenCode**.
 
-1. Extract this zip anywhere, e.g. `C:\Tools\vscode-bridge`.
+1. Clone this branch (or download it) anywhere, e.g. `C:\Tools\vscode-bridge`.
 2. Run the installer (it checks prerequisites, creates the token, installs the
    extension, registers the MCP server globally, and verifies the bridge):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File "C:\\Tools\\vscode-bridge\\install.ps1"
+powershell -ExecutionPolicy Bypass -File "C:\Tools\vscode-bridge\install.ps1"
 ```
 
 3. Open VSCode, then check the **OpenCode Bridge** output channel: `listening on http://127.0.0.1:37651`.
@@ -50,7 +50,7 @@ Manual alternative (same steps the script automates, with `<bridge>` = your extr
    ```powershell
    cd "<bridge>"
    npx.cmd --yes @vscode/vsce package --no-dependencies
-   code --install-extension opencode-bridge-*.vsix --force
+   code --install-extension opencode-bridge-0.1.3.vsix --force
    ```
    (Use `npx.cmd`, not `npx.ps1`, if PowerShell script execution is restricted.
    A prebuilt `.vsix` is included, so this also works offline.)
@@ -70,7 +70,7 @@ node "<bridge>\vscode-bridge.mjs" list
 node "<bridge>\vscode-bridge.mjs" read C:\path\to\file.txt
 echo "new content" | node "<bridge>\vscode-bridge.mjs" write C:\path\to\file.txt --save
 ```
-(`<bridge>` = the folder you extracted this to.)
+(`<bridge>` = the folder you cloned this branch to.)
 
 In OpenCode, use MCP tools: `vscode_status`, `vscode_list_open`, `vscode_read`, `vscode_write`, `vscode_open`, `vscode_save`.
 
