@@ -1,0 +1,61 @@
+{
+  "name": "opencode-bridge",
+  "displayName": "OpenCode Bridge",
+  "description": "Local HTTP bridge that lets OpenCode read/write files in VSCode (open editors + workspace).",
+  "version": "0.1.3",
+  "publisher": "opencode",
+  "license": "MIT",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true,
+      "description": "Localhost bridge only; performs no workspace-trust-sensitive operations."
+    }
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "files": [
+    "package.json",
+    "extension.js"
+  ],
+  "contributes": {
+    "configuration": {
+      "title": "OpenCode Bridge",
+      "properties": {
+        "opencodeBridge.port": {
+          "type": "number",
+          "default": 37651,
+          "description": "Localhost port for the OpenCode bridge HTTP server."
+        },
+        "opencodeBridge.host": {
+          "type": "string",
+          "default": "127.0.0.1",
+          "description": "Bind host for the bridge (keep 127.0.0.1)."
+        },
+        "opencodeBridge.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Start the bridge HTTP server on activation."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "opencodeBridge.restart",
+        "title": "OpenCode Bridge: Restart server"
+      },
+      {
+        "command": "opencodeBridge.status",
+        "title": "OpenCode Bridge: Show status"
+      }
+    ]
+  },
+  "scripts": {
+    "package": "npx --yes @vscode/vsce package --no-dependencies"
+  }
+}
