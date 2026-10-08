@@ -1,0 +1,6 @@
+# Keep shell scripts LF everywhere so the shebang survives checkout on macOS.
+install.sh text eol=lf
+# Windows installer stays CRLF-friendly; JS/JSON are runtime-tolerant either way.
+*.ps1 text eol=crlf
+# Never mangle the packaged extension.
+*.vsix binary

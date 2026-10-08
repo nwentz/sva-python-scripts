@@ -1,4 +1,4 @@
-# VSCode Bridge for OpenCode
+﻿# VSCode Bridge for OpenCode
 
 Lets OpenCode **read and write files through VSCode** — including unsaved editor buffers — via a localhost HTTP bridge plus an MCP server.
 
@@ -33,13 +33,24 @@ CLI: vscode-bridge.mjs ───────────────────
 ## Setup (any computer)
 
 Prerequisites on the new machine: **Node.js 18+**, **VSCode** (with the `code` CLI on PATH), **OpenCode**.
+On macOS, install the `code` command first: open VSCode, `Cmd+Shift+P` →
+"Shell Command: Install 'code' command in PATH".
 
-1. Clone this branch (or download it) anywhere, e.g. `C:\Tools\vscode-bridge`.
+1. Clone this branch (or download it) anywhere, e.g. `C:\Tools\vscode-bridge`
+   (Windows) or `~/tools/vscode-bridge` (macOS).
 2. Run the installer (it checks prerequisites, creates the token, installs the
    extension, registers the MCP server globally, and verifies the bridge):
 
+Windows:
+
 ```powershell
 powershell -ExecutionPolicy Bypass -File "C:\Tools\vscode-bridge\install.ps1"
+```
+
+macOS / Linux:
+
+```sh
+bash ~/tools/vscode-bridge/install.sh
 ```
 
 3. Open VSCode, then check the **OpenCode Bridge** output channel: `listening on http://127.0.0.1:37651`.
@@ -54,8 +65,11 @@ Manual alternative (same steps the script automates, with `<bridge>` = your extr
    ```
    (Use `npx.cmd`, not `npx.ps1`, if PowerShell script execution is restricted.
    A prebuilt `.vsix` is included, so this also works offline.)
-2. Reload VSCode. A token is created at `%USERPROFILE%\.config\opencode\vscode-bridge.token` (or pre-create it so MCP/CLI match before first run).
-3. Register MCP: `opencode mcp add vscode --global -- node "<bridge>\vscode-bridge-mcp.mjs"`
+2. Reload VSCode. A token is created at `%USERPROFILE%\.config\opencode\vscode-bridge.token`
+   (Windows) or `~/.config/opencode/vscode-bridge.token` (macOS/Linux) — same file,
+   just different home-variable spelling. Pre-create it if you want MCP/CLI to match
+   before the first run.
+3. Register MCP: `opencode mcp add vscode --global -- node "<bridge>/vscode-bridge-mcp.mjs"`
 
 > Note: the extension declares `capabilities.untrustedWorkspaces.supported` so it loads
 > in single-file / empty-window sessions, which VS Code may otherwise treat as untrusted
@@ -65,12 +79,13 @@ Manual alternative (same steps the script automates, with `<bridge>` = your extr
 ## Usage
 
 ```powershell
-node "<bridge>\vscode-bridge.mjs" status
-node "<bridge>\vscode-bridge.mjs" list
-node "<bridge>\vscode-bridge.mjs" read C:\path\to\file.txt
-echo "new content" | node "<bridge>\vscode-bridge.mjs" write C:\path\to\file.txt --save
+node "<bridge>/vscode-bridge.mjs" status
+node "<bridge>/vscode-bridge.mjs" list
+node "<bridge>/vscode-bridge.mjs" read C:\path\to\file.txt
+echo "new content" | node "<bridge>/vscode-bridge.mjs" write C:\path\to\file.txt --save
 ```
-(`<bridge>` = the folder you cloned this branch to.)
+(`<bridge>` = the folder you cloned this branch to. Forward slashes work on
+Windows too; on macOS use targets like `~/notes/todo.txt`.)
 
 In OpenCode, use MCP tools: `vscode_status`, `vscode_list_open`, `vscode_read`, `vscode_write`, `vscode_open`, `vscode_save`.
 
