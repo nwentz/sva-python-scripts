@@ -63,3 +63,17 @@ The GUI is movable, flexible, and fully useable, images are mostly pulled succes
 
 
 PEER RUN
+
+
+Peer Run Test for Nora Wentz 
+
+Test Done by Nora Yassin
+
+The tool opens and works just fine. I tested It by searching for houses in Saudi Arabia from 1994, then broadened my searches to 20th century architecture in Saudi Arabia, the Middle East, and Europe. The Saudi searches returned unrelated images or nothing, the Middle East search reported 27 results without visible images, but the Europe search displayed many correct  images.
+
+
+
+
+WHAT I'LL FIX
+
+I need more image APIs to get more variety in my images. My image retriever has a Euro-centric bias given that the sources I've chosen all originate from the West. To fix this, I'll see if I can get access to more niche image providers from different countries and maybe one of Google's image APIs if I'm lucky.
