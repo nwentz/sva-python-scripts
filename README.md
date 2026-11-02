@@ -1,4 +1,4 @@
-This is an AI-generated tool written in Python for Adobe Photoshop. It's an image reference retriever that pulls images based on a user's prompt from various APIs. Those being the National Gallery of Art, the Library of Congress, the Metropolitan Museum of Art, Wikimedia Commons, Cleveland Museum of Art, Art Institute of Chicago, Wellcome Collection, and OpenVerse.
+This is an AI-generated tool written in Python for Adobe Photoshop. It's an image reference retriever that pulls images based on a user's prompt from various APIs. Those being the National Gallery of Art, the Library of Congress, the Metropolitan Museum of Art, Wikimedia Commons, Cleveland Museum of Art, Art Institute of Chicago, Wellcome Collection, Internet Archive, Minneapolis Institute of Art, Rijiksmuseum, Statens Museum for Kunst, Walters Art Museum and OpenVerse.
 
 PREREQUISITES
 
@@ -61,7 +61,7 @@ I need more image APIs to get more variety in my images. My image retriever has 
 
 WHAT I FIXED
 
-With my AI agent, I added diverse sources like Rijksmuseum, Harvard Art Museum, and the Smithsonian Museum. These three sources have more non-European art though they still are Western-based primarily. I also changed the GUI to match the design language of Photoshop, made it a plugin easily accessible as a panel one can click on without breaking their workflow. I improved the GUI further by getting rid of jitters that occured when resizing the tool window or scrolling.
+With my AI agent, I added diverse sources like Rijksmuseum, Internet Archive, Statens Museum for Kunst and others. These sources have more non-European art though they still are Western-based primarily. I also changed the GUI to match the design language of Photoshop, made it a plugin easily accessible as a panel one can click on without breaking their workflow. I improved the GUI further by getting rid of jitters that occured when resizing the tool window or scrolling.
 
 
 YOUTUBE LINK:
