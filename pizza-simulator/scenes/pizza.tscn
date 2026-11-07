@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://ci75r8ujasmye"]
+
+[ext_resource type="Script" uid="uid://dggg5ur3km1bg" path="res://scripts/pizza.gd" id="1_7q0oi"]
+
+[node name="Pizza" type="Node3D" unique_id=1026293460]
+script = ExtResource("1_7q0oi")

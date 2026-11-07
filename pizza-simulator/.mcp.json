@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "godot-mcp-toolkit": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@npgamedev/godot-mcp-server"]
+    }
+  }
+}

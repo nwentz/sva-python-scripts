@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://d2yhe7rojfse"]
+
+[sub_resource type="CapsuleShape3D" id="caps"]
+radius = 0.3
+height = 1.8
+
+[sub_resource type="CapsuleMesh" id="caps_mesh"]
+radius = 0.25
+height = 1.8
+
+[node name="Character" type="CharacterBody3D" unique_id=2017996039]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+script = ExtResource("uid://cos5tuwcboosm")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1935550674]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("caps")
+
+[node name="Model" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0.3, 1, 0, 0.5, 0)
+
+[node name="CharacterModel" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0.3, 1, 0, 0.5, 0)
+mesh = SubResource("caps_mesh")
+material_override = null
