@@ -155,7 +155,6 @@ func _camera(target: Node3D) -> void:
 	arm.name = "CameraArm"
 	arm.spring_length = 2.5
 	arm.margin = 0.25
-	arm.target_position = Vector3(0, 0.8, 0)
 	rig.add_child(arm)
 
 	var cam := Camera3D.new()
