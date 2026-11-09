@@ -141,11 +141,11 @@ func _camera(target: Node3D) -> void:
 	var cam := Camera3D.new()
 	cam.name = "Camera"
 	cam.fov = 70.0
-	cam.make_current()
 	arm.add_child(cam)
 
 	print("Adding camera rig to scene")
 	add_child(rig)
+	cam.make_current()
 
 	print("Camera rig created at:", rig.global_position, "rotation:", rig.rotation)
 
