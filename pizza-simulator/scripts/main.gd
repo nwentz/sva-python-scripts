@@ -69,7 +69,6 @@ func _environment() -> void:
 	sun.light_energy = 2.5
 	sun.shadow_enabled = true
 	sun.shadow_blur = 0.3
-	sun.shadow_distance = 20.0
 	add_child(sun)
 
 	var fill := OmniLight3D.new()
@@ -156,4 +155,3 @@ func _interaction(character: PhysicsBody3D) -> void:
 	n.set_script(load(INTERACTION))
 	add_child(n)
 	n.call("setup", character)
-
