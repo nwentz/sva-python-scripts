@@ -15,7 +15,28 @@ func _ready() -> void:
 	_environment()
 	_room()
 
-	var character: Node3D = load(CHARACTER).instantiate()
+	var character: Node3D = null
+	var ps: PackedScene = load(CHARACTER)
+	if ps != null:
+		character = ps.instantiate()
+	if character == null:
+		# Fallback: build a simple capsule body so the game still runs.
+		character = CharacterBody3D.new()
+		character.name = "Character"
+		var col := CollisionShape3D.new()
+		var shape := CapsuleShape3D.new()
+		shape.radius = 0.3
+		shape.height = 1.8
+		col.shape = shape
+		col.position = Vector3(0, 0.9, 0)
+		character.add_child(col)
+		var mesh := MeshInstance3D.new()
+		var bm := CapsuleMesh.new()
+		bm.radius = 0.25
+		bm.height = 1.8
+		mesh.mesh = bm
+		mesh.position = Vector3(0, 0.9, 0)
+		character.add_child(mesh)
 	character.position = Vector3(0, 0.05, 4.5)
 	add_child(character)
 	print("Character spawned at:", character.global_position)
