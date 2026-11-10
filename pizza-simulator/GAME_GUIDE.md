@@ -14,43 +14,48 @@ A fast-paced pizza making simulation where you must fulfill customer orders by a
 | **Sprint** | SHIFT |
 | **Jump** | SPACE |
 | **Look Around** | Mouse |
-| **Interact** | E or Left Click |
+| **Interact / Grab** | G or Left Click |
+| **Drop topping on counter** | L |
 | **Toggle Mouse** | ESC |
 
 ## 🕹️ Gameplay Loop
 
 ### Step 1: Start (DOUGH_STATION)
 1. Look at DOUGH_STATION (left side)
-2. Press **E**
-3. Hold pizza, move to PREP_TABLE (center)
+2. Press **G** to pick up the dough
+3. Move to the PREP_TABLE (center)
+4. Press **L** to drop the dough onto the table - it falls into place
 
-### Step 2: Stretch
-1. Stand at PREP_TABLE
-2. Press **E** on the dough
-3. Go grab ingredients from left stations
+### Step 2: Sauce
+1. Look at SAUCE_STATION and press **G** to grab the sauce
+2. Return to the PREP_TABLE
+3. Press **L** to drop the sauce onto the dough
 
-### Step 3: Assemble
-1. **SAUCE_STATION** → Press **E** to grab sauce
-2. **CHEESE_STATION** → Press **E** to grab cheese
-3. **TOPPING_STATION** → Press **E** to grab pepperoni
-4. Return to PREP_TABLE
+### Step 3: Cheese
+1. Look at CHEESE_STATION and press **G** to grab the cheese
+2. Return to the PREP_TABLE
+3. Press **L** to drop the cheese onto the sauce
 
-### Step 4: Apply Ingredients
-1. Press **E** at PREP_TABLE
-2. Click on the dough to apply ingredients
-3. Repeat for more toppings
-4. Click on prep table again to lock ingredients
+### Step 4: Toppings
+1. Look at TOPPING_STATION and press **G** to grab a topping
+   (the station hands you whichever topping your current order still needs)
+2. Return to the PREP_TABLE
+3. Press **L** to drop the topping onto the cheese
+4. Repeat for each topping your order requires
 
 ### Step 5: Bake (OVEN)
-1. Go to OVEN (top of room)
-2. Press **E** with pizza in hand
+1. Press **G** at the PREP_TABLE to pick the pizza up
+2. Carry it to the OVEN (top of room) and press **G** to put it in
 3. Watch the baking timer!
-4. Wait for "Pizza is done" hint
+4. Press **G** again at the oven when it says "Pizza is done!"
 
 ### Step 6: Serve (COUNTER)
-1. Go to SERVE COUNTER (far right)
-2. Press **E** when pizza is done
+1. Carry the baked pizza to the SERVE COUNTER (right side)
+2. Press **G** to serve it
 3. Get points!
+
+> **Tip:** Dropped items fall with real physics, so aim at the pizza before
+> pressing **L** to land the topping where you want it.
 
 ## 📊 Order System
 
@@ -93,7 +98,7 @@ Score = (40% toppings match) + (40% baking quality) + (20% speed)
 
 ```
             ┌─────────┐
-            │   OVEN  │  Top (0, 0.5, 5.2)
+            │   OVEN  │  Top (0, 0, 5)
             │  (Hot!) │
             └─────────┘
 
@@ -104,7 +109,7 @@ Score = (40% toppings match) + (40% baking quality) + (20% speed)
 └─────────────┴──────────┴─────────────┴──────────────┴────────┘
                            (Left wall)
                                            ┌─────────┐
-                                           │ COUNTER │  Right (0, 0.5, 7.5)
+                                           │ COUNTER │  Right (6, 0, 5)
                                            │ SERVE   │
                                            └─────────┘
 ```

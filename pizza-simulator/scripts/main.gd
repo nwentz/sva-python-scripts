@@ -37,7 +37,14 @@ func _ready() -> void:
 		mesh.mesh = bm
 		mesh.position = Vector3(0, 0.9, 0)
 		character.add_child(mesh)
-	character.position = Vector3(0, 0.05, 4.5)
+	character.position = Vector3(0, 0, 0)
+	# Rigged GLB model (stands on the floor, origin at feet)
+	var glb = load("res://models/Low-Poly Character.glb")
+	if glb:
+		var m = glb.instantiate()
+		m.name = "RiggedModel"
+		_tint_skin(m)
+		character.add_child(m)
 	add_child(character)
 	print("Character spawned at:", character.global_position)
 
@@ -59,16 +66,57 @@ func _ready() -> void:
 	print("KitchenInit added to scene")
 
 	await get_tree().process_frame
-	if init.has_method("initialize_stations"):
-		init.initialize_stations()
 
 	add_child(HUD.new())
 	print("HUD added")
+
+	# On-screen movement arrows (bottom-left, laid out as a D-pad)
+	var canvas := CanvasLayer.new()
+	var root := Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	canvas.add_child(root)
+
+	var btns := {"↑": Vector2(0,-1), "↓": Vector2(0,1), "←": Vector2(-1,0), "→": Vector2(1,0)}
+	# D-pad anchored to the bottom-right corner (HUD text lives bottom-left)
+	var cells := {"↑": Vector2(-168, -240), "↓": Vector2(-168, -96), "←": Vector2(-240, -168), "→": Vector2(-96, -168)}
+	for name in btns:
+		var b := Button.new()
+		b.text = name
+		b.focus_mode = Control.FOCUS_NONE
+		b.add_theme_font_size_override("font_size", 44)
+		b.anchor_left = 1.0
+		b.anchor_right = 1.0
+		b.anchor_top = 1.0
+		b.anchor_bottom = 1.0
+		var c: Vector2 = cells[name]
+		b.offset_left = c.x
+		b.offset_right = c.x + 72
+		b.offset_top = c.y
+		b.offset_bottom = c.y + 72
+		b.mouse_filter = Control.MOUSE_FILTER_STOP
+		var v: Vector2 = btns[name]
+		b.button_down.connect(func(): if _character: _character.ui_input = v)
+		b.button_up.connect(func(): if _character: _character.ui_input = Vector2.ZERO)
+		root.add_child(b)
+	add_child(canvas)
+
 	print("=== Setup Complete ===")
 
+func _tint_skin(root: Node) -> void:
+	var skin := Color(0.85, 0.62, 0.45)
+	for n in root.get_children():
+		if n is MeshInstance3D:
+			var mi := n as MeshInstance3D
+			for s in range(mi.mesh.get_surface_count()):
+				var m := StandardMaterial3D.new()
+				m.albedo_color = skin
+				m.roughness = 0.9
+				mi.set_surface_override_material(s, m)
+		_tint_skin(n)
+
 func _physics_process(delta: float) -> void:
-	if _character and is_instance_valid(_character) and _camera_rig and is_instance_valid(_camera_rig):
-		_camera_rig.global_position = _character.global_position + Vector3(0, 2.0, 0)
+	pass
 
 func _environment() -> void:
 	print("Creating environment...")
@@ -112,7 +160,7 @@ func _environment() -> void:
 
 func _room() -> void:
 	var w := 16.0
-	var d := 12.0
+	var d := 18.0
 	var h := 4.0
 	print("Creating room - Size:", Vector3(w, h, d))
 	_box(Vector3(0, -0.1, 0), Vector3(w, 0.2, d), Color(0.44, 0.38, 0.31))
@@ -147,24 +195,13 @@ func _camera(target: Node3D) -> void:
 
 	var rig := Node3D.new()
 	rig.name = "CameraRig"
-	rig.global_position = target.global_position + Vector3(0, 2.0, 0)
-	rig.rotation = Vector3(-0.3, 0, 0)
+	rig.set_script(load(CAMERA_RIG))
+	rig.global_position = target.global_position + Vector3(0, 1.55, 0)
 	_camera_rig = rig
-
-	var arm := SpringArm3D.new()
-	arm.name = "CameraArm"
-	arm.spring_length = 2.5
-	arm.margin = 0.25
-	rig.add_child(arm)
-
-	var cam := Camera3D.new()
-	cam.name = "Camera"
-	cam.fov = 70.0
-	arm.add_child(cam)
 
 	print("Adding camera rig to scene")
 	add_child(rig)
-	cam.make_current()
+	rig.call("setup", target)
 
 	print("Camera rig created at:", rig.global_position, "rotation:", rig.rotation)
 

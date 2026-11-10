@@ -6,6 +6,7 @@ var _score: Label
 var _time: Label
 var _hands: Label
 var _hint: Label
+var _keys: Label
 var _flash: Label
 var _timer_bar: ColorRect
 var _timer_t := 0.0
@@ -17,6 +18,7 @@ func _ready() -> void:
 	_time = _mk(24, 134, 760, 40, 20)
 	_hands = _mk(24, 618, 900, 40, 20)
 	_hint = _mk(24, 660, 1140, 44, 20)
+	_keys = _mk(24, 584, 1140, 34, 16)
 	_flash = _mk(0, 300, 1280, 60, 32)
 	_timer_bar = ColorRect.new()
 	_timer_bar.size = Vector2(0, 4)
@@ -25,6 +27,7 @@ func _ready() -> void:
 	_timer_bar.modulate = Color(0.4, 0.8, 1)
 	add_child(_timer_bar)
 	_flash.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_keys.text = "G = grab / interact     L = drop onto the prep table     WASD = move     SHIFT = sprint     SPACE = jump     ESC = free mouse"
 
 	GameManager.order_changed.connect(_refresh)
 	GameManager.hands_changed.connect(_refresh)
@@ -53,7 +56,7 @@ func _refresh() -> void:
 	_order.text = "ORDER: " + (", ".join(parts) if parts.size() else "waiting...")
 	_score.text = "Score: %d      Pizzas served: %d" % [g.score, g.served]
 
-	var p := g.hands_pizza
+	var p = g.hands_pizza
 	if p:
 		_hands.text = "Hands: pizza (%s)" % _stage_name(p.stage)
 	elif g.hands_ingredient != "":
@@ -78,7 +81,6 @@ func _process(delta: float) -> void:
 func _stage_name(s: int) -> String:
 	return {
 		Pizza.Stage.DOUGH: "raw dough",
-		Pizza.Stage.STRETCHED: "stretched",
 		Pizza.Stage.SAUCED: "sauced",
 		Pizza.Stage.CHEESED: "cheesed",
 		Pizza.Stage.TOPPED: "topped",

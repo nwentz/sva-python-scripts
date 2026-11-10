@@ -7,7 +7,14 @@ const SPRINT_SPEED := 8.0
 const ACCELERATION := 10.0
 const FRICTION := 15.0
 
+# Keep the character inside the kitchen
+const BOUNDS_X := 7.4
+const BOUNDS_Z_MIN := -8.4
+const BOUNDS_Z_MAX := 8.4
+
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
+
+var ui_input := Vector2.ZERO
 
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
@@ -16,7 +23,7 @@ func _physics_process(delta: float) -> void:
 		velocity.y = JUMP_VELOCITY
 
 	# Movement input
-	var input := Vector2.ZERO
+	var input := ui_input
 	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
 		input.y -= 1.0
 	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
@@ -50,6 +57,10 @@ func _physics_process(delta: float) -> void:
 	velocity.z = move_toward(velocity.z, target_velocity_z, ACCELERATION * delta)
 
 	move_and_slide()
+
+	# Clamp inside the kitchen
+	global_position.x = clampf(global_position.x, -BOUNDS_X, BOUNDS_X)
+	global_position.z = clampf(global_position.z, BOUNDS_Z_MIN, BOUNDS_Z_MAX)
 
 	if dir != Vector3.ZERO:
 		var target := global_position + dir
