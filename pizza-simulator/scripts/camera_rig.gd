@@ -26,7 +26,7 @@ const ROOM_Z_MAX := 5.9
 const CHAR_X_MIN := -7.2
 const CHAR_X_MAX := 6.6
 const CHAR_Z_MIN := -2.9
-const CHAR_Z_MAX := 4.2
+const CHAR_Z_MAX := 5.5
 
 # Keep the camera this far away from whatever it would otherwise touch.
 const WALL_MARGIN := 0.25

@@ -657,11 +657,13 @@ func _drink_fridge() -> void:
 	fridge.name = "DrinkFridge"
 	# On the wall behind the customer (-X), between them and the middle of
 	# the room, clear of the shrub at z -2.6.
-	fridge.position = Vector3(-7.3, 0, 0.8)
+	fridge.position = Vector3(-7.9, 0, 0.8)
 	# Same facing as the seated customer: local +Z (the glass door) points
 	# towards +X, into the room.
 	fridge.rotation_degrees = Vector3(0, 90, 0)
 	add_child(fridge)
+	# Solid cabinet: the chef has to walk around it.
+	_add_box_collider(fridge, Vector3(1.3, 2.2, 0.72), Vector3(0, 1.1, 0))
 	var shell := Color(0.12, 0.14, 0.16)
 	var shelf_col := Color(0.30, 0.33, 0.36)
 
@@ -748,10 +750,13 @@ func _serve_area() -> void:
 
 	var chair := Node3D.new()
 	chair.name = "CustomerChair"
-	chair.position = Vector3(c.x - 1.5, 0, c.z - 0.1)
+	chair.position = Vector3(c.x - 1.6, 0, c.z - 0.1)
 	# Local +Z is the front of the chair; turn it towards the round table.
 	chair.rotation_degrees = Vector3(0, 90, 0)
 	add_child(chair)
+	# One solid body for the chair and the seated customer, so the chef walks
+	# around them instead of straight through the model.
+	_add_box_collider(chair, Vector3(0.8, 1.45, 0.8), Vector3(0, 0.72, 0))
 	# A full-size chair: the customer is the same size as the player chef.
 	_decor_mesh(chair, _costume_box(Vector3(0.72, 0.10, 0.72)), wood, Vector3(0, 0.58, 0), "Seat")
 	for sx in [-1.0, 1.0]:
@@ -800,6 +805,19 @@ func _serve_area() -> void:
 	cust.set_process(true)
 	cust.call("setup")
 	GameManager.customer_node = cust
+
+## A simple static box collider for decoration that the player must not pass
+## through (fridge, occupied chair). It follows the parent's transform.
+func _add_box_collider(parent: Node3D, size: Vector3, pos: Vector3) -> void:
+	var body := StaticBody3D.new()
+	body.name = "DecorCollider"
+	var shape := BoxShape3D.new()
+	shape.size = size
+	var cs := CollisionShape3D.new()
+	cs.shape = shape
+	body.add_child(cs)
+	body.position = pos
+	parent.add_child(body)
 
 func _decor_mesh(parent: Node3D, mesh: Mesh, color: Color, pos: Vector3, nm: String) -> void:
 	var mi := MeshInstance3D.new()

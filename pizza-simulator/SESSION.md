@@ -71,7 +71,7 @@ left of the screen).
 | TOPPINGS | 1.8, 5 |
 | PREP TABLE | 2.55, 2 (in front of the row) |
 | OVEN | 0, 5 |
-| COUNTER | -6.3, 5 |
+| COUNTER | -6.3, 3.6 |
 
 Room is 17 × 9.4, centred on the cooking line (`ROOM_CZ = 1.35`) so the
 counters fill the view instead of leaving the player in an empty floor. The
@@ -282,7 +282,8 @@ an item lands on exactly the declared surfaces and nothing else.
 | `GPUParticles3D.emission_rate` error | Not a valid property | Removed; used `process_material.emission_shape` instead |
 | Project would not run after deleting `.godot` | Assets needed re-importing | `godot --headless --import <project.godot>` |
 | Character sank into the outer counters when walking along the side wall | The movement clamp (`x ±7.2`, `z ≤5.4`) was *wider* than the station footprint, so after `move_and_slide` shoved the capsule out of a counter, the clamp teleported it straight back in | Tightened both `character.gd` and `camera_rig.gd` to `x ±6.6` / `z ≤4.0` — the capsule radius (0.3) short of the counter edges. Also fixed `kitchen_init.gd`, which still placed the serve counter at `x +6` while `main.tscn` has it at `x −6.3` |
-| Chef could not walk close to the customer's table | The symmetric `x ±6.6` / `z ≤4.0` clamp and the round table's full-radius collider held the player back | Bounds are now asymmetric (`x -7.2 … +6.6`, `z ≤4.2`) on the serve side, and the round table's collider is `COUNTER_RADIUS - 0.08` while its visible top stays the same size |
+| Chef could not walk behind the customer's table | The symmetric `x ±6.6` / `z ≤4.0` clamp and the round table's full-radius collider held the player back | Bounds are now asymmetric (`x -7.2 … +6.6`) and reach `z ≤5.5`; the serve table, chair and customer were moved forward to `z = 3.6` and the table collider is `COUNTER_RADIUS - 0.08`, leaving a clear walkway behind them |
+| Chef walked through the customer/chair and the drink fridge | Those decorations were mesh-only | `_add_box_collider()` gives the occupied chair and the fridge simple solid bodies; both were tucked closer to the -X wall so the tighter `x -7.2` bound cannot overlap them |
 | Carried pizza clipped through the serve counter | It was held nearly vertical (`rotation −72°`) at chest height, so its near edge dipped below the 1.1 m counter top | Carry pose is now `(0, 1.40, −0.45)` with `−30°` tilt, keeping the lowest point above every counter top |
 | Chef hat filled the kneading close-up | The focus camera sat just behind the player at the same height as the white chef hat, so the hat occluded the dough | Focus camera now sits in front of and above the player (`focus_point + (0, 1.55, −0.85)`), looking steeply down; station labels are hidden during the close-up too |
 | Toppings floated above the pizza after pickup | The drop surface cylinder was *centred* on the pizza's top layer, so its top face was 4 cm higher than the real base; the prep-table surface was also slightly above the pizza | The cylinder centre is now `top_y − height/2` so its top face matches the pizza, and the table surface is omitted whenever a pizza is on the table. `Pizza.attach_topping()` also snaps every topping flat onto the surface (and clamps it inside the base), so a tilted or high drop can never leave the olive hovering |

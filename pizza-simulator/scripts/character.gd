@@ -19,7 +19,9 @@ const FRICTION := 15.0
 const BOUNDS_X_MIN := -7.2
 const BOUNDS_X_MAX := 6.6
 const BOUNDS_Z_MIN := -2.9
-const BOUNDS_Z_MAX := 4.2
+## Past the serve table there is a gap to the back wall, so the chef can walk
+## around the table and the seated customer instead of being stopped short.
+const BOUNDS_Z_MAX := 5.5
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 

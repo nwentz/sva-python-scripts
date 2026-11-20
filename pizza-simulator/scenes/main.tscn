@@ -33,5 +33,5 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
 script = ExtResource("2_station")
 
 [node name="COUNTER" type="StaticBody3D" parent="Kitchen" unique_id=2001319919]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.3, 0, 5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.3, 0, 3.6)
 script = ExtResource("2_station")

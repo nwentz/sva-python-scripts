@@ -132,7 +132,7 @@ Score = (40% toppings match) + (40% baking quality) + (20% speed)
      └─────────────┘
                                             ┌─────────┐
                                             │ COUNTER │  Right of the
-                                            │ SERVE   │  player (-6.3, 5)
+                                            │ SERVE   │  player (-6.3, 3.6)
                                             └─────────┘
 ```
 
