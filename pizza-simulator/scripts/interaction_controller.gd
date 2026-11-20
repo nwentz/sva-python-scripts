@@ -15,6 +15,12 @@ extends Node3D
 var reach := 6.0
 var camera_reach := 14.0
 const STATION_AIM_HEIGHT := 0.9
+const STATION_TOP_HEIGHT := 1.1
+## How far (in pixels) the crosshair may be from a station for it to count.
+const SCREEN_MAX_DISTANCE := 320.0
+## How much closer to the crosshair a station has to be to win over the one
+## the interaction ray physically hit.
+const SCREEN_TOLERANCE := 40.0
 
 var _char: PhysicsBody3D
 var _dropper: PhysicsDropper
@@ -25,6 +31,11 @@ func setup(c: PhysicsBody3D) -> void:
 		_dropper = PhysicsDropper.new()
 		_dropper.name = "PhysicsDropper"
 		add_child(_dropper)
+
+## Plays a character gesture (grab / place / oven / serve).
+func _gesture(action: String) -> void:
+	if _char != null and is_instance_valid(_char) and _char.has_method("play_action"):
+		_char.play_action(action)
 
 func _unhandled_input(e: InputEvent) -> void:
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
@@ -41,8 +52,27 @@ func _unhandled_input(e: InputEvent) -> void:
 
 func _cast(o: Vector3, d: Vector3, dist: float) -> Dictionary:
 	var q := PhysicsRayQueryParameters3D.create(o, o + d * dist)
-	q.exclude = [_char.get_rid()]
+	q.exclude = _excluded()
 	return get_world_3d().direct_space_state.intersect_ray(q)
+
+## Bodies the interaction ray must ignore: the player and everything the
+## player is carrying. The carried pizza has its own collider (so toppings
+## can land on it) and used to block the ray, which forced the game to fall
+## back to screen-space picking and pick the wrong station - usually the
+## prep table behind the player.
+func _excluded() -> Array[RID]:
+	var out: Array[RID] = []
+	if _char == null or not is_instance_valid(_char):
+		return out
+	out.append(_char.get_rid())
+	_collect_bodies(_char, out)
+	return out
+
+func _collect_bodies(node: Node, out: Array[RID]) -> void:
+	for c in node.get_children():
+		if c is CollisionObject3D:
+			out.append((c as CollisionObject3D).get_rid())
+		_collect_bodies(c, out)
 
 func _all_stations() -> Array:
 	var out: Array = []
@@ -59,6 +89,26 @@ func _all_stations() -> Array:
 
 func _station_center(s: KitchenStation) -> Vector3:
 	return s.global_position + Vector3(0, STATION_AIM_HEIGHT, 0)
+
+## The point on a station the player aims at (the top of its counter).
+func _station_aim(s: KitchenStation) -> Vector3:
+	return s.global_position + Vector3(0, STATION_TOP_HEIGHT, 0)
+
+## Screen distance from the crosshair to every station that is in front of the
+## camera. Stations behind the camera are skipped: their mirrored projection
+## can land right next to the crosshair and steal the interaction.
+func _screen_scores(c: Camera3D, cam_pos: Vector3) -> Dictionary:
+	var screen := c.get_viewport().get_visible_rect().size * 0.5
+	var out: Dictionary = {}
+	for s in _all_stations():
+		var st: KitchenStation = s
+		var aim := _station_aim(st)
+		if cam_pos.distance_to(aim) > camera_reach:
+			continue
+		if c.is_position_behind(aim):
+			continue
+		out[st] = c.unproject_position(aim).distance_to(screen)
+	return out
 
 func _pick() -> Dictionary:
 	var c := get_viewport().get_camera_3d()
@@ -78,39 +128,52 @@ func _pick() -> Dictionary:
 		aim.y = -0.6
 		aim = aim.normalized()
 
-	var direct := _cast(cam_pos, aim, camera_reach)
-	if not direct.is_empty() and _station_of(direct.get("collider") as Node) != null:
-		return direct
-
-	# Screen-space pick: the station whose centre projects closest to the middle
-	# of the screen is the one the player is looking at.
-	var vp := c.get_viewport()
-	var screen := vp.get_visible_rect().size * 0.5
+	# What the crosshair points at.
+	var scores := _screen_scores(c, cam_pos)
 	var best: KitchenStation = null
 	var best_score := 1e20
-	for s in _all_stations():
-		var center := _station_center(s)
-		if cam_pos.distance_to(center) > camera_reach:
-			continue
-		var sp := c.unproject_position(center)
-		var d := sp.distance_to(screen)
-		if d < best_score:
-			best_score = d
-			best = s
-	if best != null and best_score < 320.0:
-		return {"collider": best, "position": _station_center(best), "normal": Vector3.UP}
+	for s in scores:
+		var st: KitchenStation = s
+		var sc: float = scores[st]
+		if sc < best_score:
+			best_score = sc
+			best = st
 
-	# Fallback: from the player's chest, along the camera's facing direction.
-	var o := _char.global_position + Vector3(0, 1.2, 0)
-	var hit := _cast(o, cam_fwd, reach)
-	if not hit.is_empty():
-		return hit
-	# Last resort: straight ahead of the character.
-	var fwd := -_char.global_transform.basis.z
-	fwd.y = 0.0
-	if fwd.length_squared() > 0.001:
-		return _cast(_char.global_position + Vector3(0, 1.0, 0), fwd.normalized(), reach)
-	return {}
+	# What the ray physically hits.
+	var direct := _cast(cam_pos, aim, camera_reach)
+	var ray_station: KitchenStation = null
+	if not direct.is_empty():
+		ray_station = _station_of(direct.get("collider") as Node)
+
+	if ray_station == null:
+		# The ray hit the floor or a wall - use the station under the crosshair.
+		if best != null and best_score < SCREEN_MAX_DISTANCE:
+			return _screen_hit(best)
+		# Fallback: from the player's chest, along the camera's facing direction.
+		var o := _char.global_position + Vector3(0, 1.2, 0)
+		var hit := _cast(o, cam_fwd, reach)
+		if not hit.is_empty():
+			return hit
+		# Last resort: straight ahead of the character.
+		var fwd := -_char.global_transform.basis.z
+		fwd.y = 0.0
+		if fwd.length_squared() > 0.001:
+			return _cast(_char.global_position + Vector3(0, 1.0, 0), fwd.normalized(), reach)
+		return {}
+
+	if best == null or best == ray_station:
+		return direct
+
+	# The ray hit a station, but the crosshair is clearly on another one. The
+	# stations sit in a row, so the ray often grazes the corner of the nearer
+	# counter while the player is aiming at the one behind it.
+	var ray_score: float = scores.get(ray_station, 1e20)
+	if best_score + SCREEN_TOLERANCE < ray_score:
+		return _screen_hit(best)
+	return direct
+
+func _screen_hit(st: KitchenStation) -> Dictionary:
+	return {"collider": st, "position": _station_aim(st), "normal": Vector3.UP}
 
 func _station_of(n: Node) -> KitchenStation:
 	var cur := n
@@ -153,6 +216,7 @@ func _hold(p: Pizza) -> void:
 	p.reparent(_char, false)
 	p.position = Vector3(0, 1.15, -0.55)
 	p.rotation_degrees = Vector3(-72, 0, 0)
+	_gesture("grab")
 
 func _show_held(ing: String) -> void:
 	_clear_held()
@@ -160,10 +224,13 @@ func _show_held(ing: String) -> void:
 		return
 	var mi := Pizza.make_ingredient_mesh(ing)
 	mi.name = "HeldIngredient"
-	# Sit the item in the character's right hand (GLB RHand rests near x0.68, y1.28)
-	mi.position = Vector3(0.66, 1.24, -0.10)
-	mi.rotation_degrees = Vector3(20, 0, -12)
+	# Sit the item in the character's right hand. The model is turned 180
+	# degrees and its arms rest at its sides, so the right hand sits near
+	# x -0.22, y 1.05, z -0.09.
+	mi.position = Vector3(-0.25, 1.03, -0.15)
+	mi.rotation_degrees = Vector3(20, 0, 12)
 	_char.add_child(mi)
+	_gesture("grab")
 
 func _clear_held() -> void:
 	if _char == null or not is_instance_valid(_char):
@@ -183,7 +250,9 @@ func _next_topping(st: KitchenStation) -> String:
 	var g := GameManager
 	var table := _prep_table()
 	var placed: Pizza = table.placed_pizza if table != null else null
-	var have: Array[String] = placed.toppings if placed != null else []
+	var have: Array[String] = []
+	if placed != null:
+		have.assign(placed.toppings)
 	var needed: Array[String] = []
 	for t in g.required:
 		if not have.has(t) and not needed.has(t):
@@ -244,7 +313,7 @@ func _prep(st: KitchenStation) -> void:
 		if p:
 			g.set_hint("The prep table is already occupied.")
 			return
-		g.set_hint("Drop the dough on the table with L.")
+		g.set_hint("You are holding the pizza - take it to the oven and press G (L puts it back on the table).")
 		return
 	if p == null:
 		g.set_hint("Nothing on the table.")
@@ -277,6 +346,7 @@ func _drop() -> void:
 			g.set_hint("The prep table is already occupied.")
 			return
 		g.set_hands_pizza(null)
+		_gesture("place")
 		_drop_pizza(p, table)
 		return
 
@@ -285,6 +355,7 @@ func _drop() -> void:
 		var ing := g.hands_ingredient
 		g.set_hands_ingredient("")
 		_clear_held()
+		_gesture("place")
 		_drop_ingredient(ing, table)
 		return
 
@@ -313,7 +384,7 @@ func _surfaces_for(table: KitchenStation, pizza: Pizza) -> Array:
 	var out: Array = []
 	var top := table.global_position + Vector3(0, 1.1, 0)
 	out.append(PhysicsDropper.Surface.box(top, Vector3(1.4, 0.2, 1.4)))
-	out.append(PhysicsDropper.Surface.box(Vector3(0, -0.1, 0), Vector3(16, 0.2, 18)))
+	out.append(PhysicsDropper.Surface.box(Vector3(0, -0.1, 0), Vector3(18, 0.2, 20)))
 	if pizza != null:
 		# The pizza's own top layer, so toppings land on the cheese.
 		var p_top := pizza.global_position + Vector3(0, pizza.top_y(), 0)
@@ -377,6 +448,7 @@ func _oven(st: KitchenStation) -> void:
 		p.rotation_degrees = Vector3.ZERO
 		st.oven_pizza = p
 		g.set_hands_pizza(null)
+		_gesture("oven")
 		g.set_hint("Baking...")
 		return
 	var o := st.oven_pizza
@@ -401,5 +473,6 @@ func _serve(_st: KitchenStation) -> void:
 		g.set_hint("That isn't baked yet!")
 		return
 	g.set_hands_pizza(null)
+	_gesture("serve")
 	g.serve(p)
 	p.queue_free()

@@ -9,23 +9,23 @@ script = ExtResource("1_main")
 [node name="Kitchen" type="Node3D" parent="." unique_id=746583741]
 
 [node name="DOUGH_STATION" type="StaticBody3D" parent="Kitchen" unique_id=2001319913]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -5.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.3, 0, 5)
 script = ExtResource("2_station")
 
 [node name="SAUCE_STATION" type="StaticBody3D" parent="Kitchen" unique_id=2001319914]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, -5.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 0, 5)
 script = ExtResource("2_station")
 
 [node name="CHEESE_STATION" type="StaticBody3D" parent="Kitchen" unique_id=2001319915]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -5.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.3, 0, 5)
 script = ExtResource("2_station")
 
 [node name="TOPPING_STATION" type="StaticBody3D" parent="Kitchen" unique_id=2001319916]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, -5.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 0, 5)
 script = ExtResource("2_station")
 
 [node name="PREP_TABLE" type="StaticBody3D" parent="Kitchen" unique_id=2001319917]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.55, 0, 2)
 script = ExtResource("2_station")
 
 [node name="OVEN" type="StaticBody3D" parent="Kitchen" unique_id=2001319918]
@@ -33,5 +33,5 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
 script = ExtResource("2_station")
 
 [node name="COUNTER" type="StaticBody3D" parent="Kitchen" unique_id=2001319919]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.3, 0, 5)
 script = ExtResource("2_station")

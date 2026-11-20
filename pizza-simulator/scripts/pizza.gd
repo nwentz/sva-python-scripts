@@ -61,13 +61,7 @@ func _ready() -> void:
 
 	_mat = _base.material_override as StandardMaterial3D
 
-	_smoke = GPUParticles3D.new()
-	_smoke.amount = 20
-	_smoke.process_material = ParticleProcessMaterial.new()
-	_smoke.process_material.gravity = Vector3(0, -1, 0)
-	_smoke.process_material.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
-	_smoke.process_material.emission_sphere_radius = 0.08
-	_smoke.emitting = false
+	_smoke = Fx.make_smoke(20, 2.6, 0.2)
 	_smoke.position = Vector3(0, 0.2, 0)
 	add_child(_smoke)
 
@@ -181,14 +175,15 @@ func _apply_stage() -> void:
 func bake(delta: float) -> void:
 	# A finished pizza stays finished: BAKED and BURNT are terminal states.
 	if stage == Stage.BURNT or stage == Stage.DOUGH or stage == Stage.BAKED:
-		_smoke.emitting = false
+		if _smoke:
+			_smoke.emitting = false
 		return
 	if stage != Stage.BAKING:
 		stage = Stage.BAKING
 		bake_time = 0.0
 		bake_quality = 1.0
 		if _mat:
-			_mat.emissive = Color(0, 0, 0, 0)
+			_mat.emission_enabled = false
 
 	bake_time += delta
 	bake_quality = clampf(1.0 - absf(bake_time - bake_target) / bake_target, 0.0, 1.0)
@@ -197,20 +192,24 @@ func bake(delta: float) -> void:
 	if _mat:
 		var target_color: Color = Color(0.72, 0.45, 0.17) if t > 0.7 else Color(0.98, 0.88, 0.55)
 		_mat.albedo_color = Color(0.98, 0.88, 0.55).lerp(target_color, t)
-		_mat.emissive = Color(0.2, 0.1, 0.05) * t
+		_mat.emission_enabled = true
+		_mat.emission = Color(0.2, 0.1, 0.05) * t
 
 	if bake_time >= bake_target * 1.9:
 		stage = Stage.BURNT
 		if _mat:
 			_mat.albedo_color = Color(0.17, 0.1, 0.06)
-			_mat.emissive = Color(0, 0, 0, 0)
-		_smoke.emitting = true
-		_smoke.process_material.emission_color = Color(0.3, 0.3, 0.3)
+			_mat.emission_enabled = false
+		if _smoke:
+			_smoke.emitting = true
+			if _smoke.process_material:
+				_smoke.process_material.emission_color = Color(0.3, 0.3, 0.3)
 	elif bake_time >= bake_target:
 		stage = Stage.BAKED
-		_smoke.emitting = false
+		if _smoke:
+			_smoke.emitting = false
 		if _mat:
-			_mat.emissive = Color(0, 0, 0, 0)
+			_mat.emission_enabled = false
 
 func bake_score() -> float:
 	if stage == Stage.BURNT:

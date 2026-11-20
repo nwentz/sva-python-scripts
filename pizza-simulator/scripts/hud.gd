@@ -8,6 +8,7 @@ var _hands: Label
 var _hint: Label
 var _keys: Label
 var _flash: Label
+var _oven: Label
 var _timer_bar: ColorRect
 var _timer_t := 0.0
 var _flash_t := 0.0
@@ -16,6 +17,7 @@ func _ready() -> void:
 	_order = _mk(24, 16, 760, 70, 24)
 	_score = _mk(24, 92, 760, 40, 20)
 	_time = _mk(24, 134, 760, 40, 20)
+	_oven = _mk(24, 176, 900, 40, 22)
 	_hands = _mk(24, 618, 900, 40, 20)
 	_hint = _mk(24, 660, 1140, 44, 20)
 	_keys = _mk(24, 584, 1140, 34, 16)
@@ -65,8 +67,34 @@ func _refresh() -> void:
 		_hands.text = "Hands: empty"
 	_hint.text = g.hint
 
+## Shows what is happening in the oven, so the player can tell that the pizza
+## is cooking even when the oven is off screen.
+func _update_oven() -> void:
+	var st: KitchenStation = null
+	for s in get_tree().get_nodes_in_group("stations"):
+		if s is KitchenStation and s.kind == KitchenStation.Kind.OVEN:
+			st = s
+			break
+	if st == null or st.oven_pizza == null:
+		_oven.text = ""
+		return
+	var p := st.oven_pizza
+	if p.stage == Pizza.Stage.BAKING:
+		var left := maxf(0.0, p.bake_target - p.bake_time)
+		_oven.text = "OVEN: cooking... %.0f s to pull it out" % left
+		_oven.add_theme_color_override("font_color", Color(1.0, 0.65, 0.25))
+	elif p.stage == Pizza.Stage.BAKED:
+		_oven.text = "OVEN: pizza is ready - press G at the oven to take it out"
+		_oven.add_theme_color_override("font_color", Color(0.45, 1.0, 0.5))
+	elif p.stage == Pizza.Stage.BURNT:
+		_oven.text = "OVEN: BURNT! Press G at the oven to take it out"
+		_oven.add_theme_color_override("font_color", Color(1.0, 0.45, 0.4))
+	else:
+		_oven.text = ""
+
 func _process(delta: float) -> void:
 	_time.text = "Order time left: %.0f s" % GameManager.time_left
+	_update_oven()
 
 	# Update timer bar
 	_timer_t = GameManager.time_left / GameManager.order_time

@@ -26,6 +26,9 @@ A fast-paced pizza making simulation where you must fulfill customer orders by a
 3. Move to the PREP_TABLE (center)
 4. Press **L** to drop the dough onto the table - it falls into place
 
+> Walk right up to a counter before pressing **G** - every station is reachable,
+> including the DOUGH station at the far left end of the row.
+
 ### Step 2: Sauce
 1. Look at SAUCE_STATION and press **G** to grab the sauce
 2. Return to the PREP_TABLE
@@ -46,7 +49,8 @@ A fast-paced pizza making simulation where you must fulfill customer orders by a
 ### Step 5: Bake (OVEN)
 1. Press **G** at the PREP_TABLE to pick the pizza up
 2. Carry it to the OVEN (top of room) and press **G** to put it in
-3. Watch the baking timer!
+3. Watch the baking timer! The oven glows and smokes, and the HUD counts it
+   down ("OVEN: cooking... 6 s to pull it out")
 4. Press **G** again at the oven when it says "Pizza is done!"
 
 ### Step 6: Serve (COUNTER)
@@ -97,22 +101,25 @@ Score = (40% toppings match) + (40% baking quality) + (20% speed)
 ## 🏠 Station Positions
 
 ```
-            ┌─────────┐
-            │   OVEN  │  Top (0, 0, 5)
-            │  (Hot!) │
-            └─────────┘
+                              (Left of the player, +X side)
 
 ┌─────────────┬──────────┬─────────────┬──────────────┬────────┐
-│  DOUGH     │ SAUCE    │ CHEESE     │ TOPPINGS     │ PREP   │
-│ Station    │ Station  │ Station    │ Station      │ Table  │
-│ (-6, -5.2)  │ (-4.5,-5.2) │ (-3,-5.2)  │ (-1.5,-5.2)  │ (0,-5.2)│
+│  DOUGH     │ SAUCE    │ CHEESE     │ TOPPINGS     │  OVEN  │
+│ Station    │ Station  │ Station    │ Station      │ (Hot!) │
+│ (6.3, 5)   │ (4.8, 5) | (3.3, 5)   │ (1.8, 5)     │ (0, 5) │
 └─────────────┴──────────┴─────────────┴──────────────┴────────┘
-                           (Left wall)
-                                           ┌─────────┐
-                                           │ COUNTER │  Right (6, 0, 5)
-                                           │ SERVE   │
-                                           └─────────┘
+     ┌─────────────┐
+     │ PREP TABLE  │  In front of the row (2.55, 2)
+     └─────────────┘
+                                            ┌─────────┐
+                                            │ COUNTER │  Right of the
+                                            │ SERVE   │  player (-6.3, 5)
+                                            └─────────┘
 ```
+
+The whole cooking line runs along the `z = 5` counter and reads left to right
+from the player's starting view: **DOUGH -> SAUCE -> CHEESE -> TOPPINGS ->
+PREP TABLE -> OVEN -> SERVE**.
 
 ## 🎨 Visual Guide
 
