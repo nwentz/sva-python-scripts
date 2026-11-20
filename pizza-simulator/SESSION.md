@@ -37,6 +37,10 @@ in-editor MCP dock and an `MCPRuntimeServer` autoload registered in `project.god
 |-----|--------|
 | **G** | Grab / interact (dough, sauce, cheese, toppings, prep table, oven, counter) |
 | **L** | Drop what you are holding onto the prep table (falls with real physics) |
+| **K** | Knead the dough (5 presses, after dropping it on the prep table) |
+| **L** (with sauce/cheese) | Start the sauce-spreading or cheese-cutting close-up |
+| **C** | Cut/shred the cheese (8 presses, in the cheese close-up) |
+| **ESC** | Toggle the mouse; inside a close-up it cancels the minigame and returns to the normal camera |
 | WASD / arrows | Move (on-screen D-pad bottom-right also works) |
 | SHIFT | Sprint |
 | SPACE | Jump |
@@ -75,21 +79,149 @@ oven and counter are deliberately separated — at their old spacing the counter
 blocked the camera ray to the oven.
 
 ### Room decorations
-`main.gd::_decor()` adds a door on the wall behind the player (frame, panel,
-handle and a lamp), a tiled splashback, a wall clock, a menu board, a shelf
-with jars, framed pictures on the side walls and pendant lamps over the
-counter row. Decorations are mesh only — no colliders — so they can never
-block the player or the interaction ray.
+`main.gd::_decor()` adds:
+- a **checkered tile floor** — a 64×64 brown/white checker drawn once into
+  an `ImageTexture` and mapped over a single plane (`uv1_scale` = room size,
+  so one repeat is one 1 m tile) instead of hundreds of tile meshes;
+- a **door** on the wall behind the player (frame, panel, handle and a lamp);
+- **two windows with curtains** on that same wall — frame, emissive sky pane,
+  mullions, sill, two curtain panels and a rod;
+- a **doormat** and two **potted plants**;
+- a tiled **splashback**, a **wall clock**, a **menu board**, a **shelf with
+  jars**, **framed pictures** on the side walls and **pendant lamps** over the
+  counter row;
+- a **drink fridge** on the wall behind the customer (-X), another step away
+  at `z = 0.8` and turned to face the same direction as the customer (+X): a
+  dark cabinet with shelves of coloured soda cans (grey lids) and capped water
+  bottles behind an alpha-blended clear glass door; no collider. The framed
+  picture above it was raised one step to `y = 3.0`;
+- a **soda can on the round serve table** beside the customer.
+
+Decorations are mesh only — no colliders — so they can never block the player
+or the interaction ray.
+
+### Chef costume
+`main.gd::_dress_body()` colours the rigged model by mesh name: the torso and
+arms become a **white chef's jacket**, the legs **white trousers**, the feet
+**black shoes**, while the head, neck and hands keep their skin tone.
+
+`main.gd::_dress_model()` adds the accessories from primitives and parents
+them to `BoneAttachment3D`s on the rig, so they follow the walk cycle and the
+gestures:
+- a **red apron** — bib, a short tapered skirt, shoulder straps that meet in a
+  straps that wrap round the neck and meet at the back in a **bunny bow**
+  (two loops, two tails and a knot), plus a short waist-style **neck band**
+  joining them, replacing the awkward flat bar and the invisible torus, and a
+  waist tie that forms
+  a **closed loop all the
+  way around the shirt**, knotted at the back with a bow and two loose ends;
+- a **white chef's hat** (band + puff) and a **dark brown handlebar moustache**
+  on the head bone.
+
+The apron skirt deliberately stops just below the hips (bottom at y 0.99).
+An earlier full-length panel floated 5–6 cm off the body and was swept through
+by the thighs at full stride; the short, tapered skirt sits flush and clears
+every leg swing. The skirt top overlaps the bib so no skin shows at the seam.
+
+### Serve area
+The serve counter is now a **round pedestal table** (`station.gd`
+`_build_round_table()`): a `0.78 m` radius top, a stem and a base, with a
+matching cylindrical collision shape. `setup_station()` now rebuilds the node
+after `kitchen_init.gd` assigns its kind — previously the station was built
+once with the default DOUGH kind, so kind-specific geometry was ignored.
+
+`main.gd::_serve_area()` (called *after* station init, when the counter's kind
+is known) adds a full-size wooden **chair** and a **customer** reusing the same
+low-poly GLB as the player. The customer is the **same scale as the chef**,
+repainted in civilian colours, dropped until its `DEF-spine` hip bone lines up
+with the seat, and controlled by `scripts/customer.gd`: bent thighs/shins for
+sitting, upper arms in the same lowered rest pose as the chef, and an eating
+animation. All serve-area pieces are mesh only.
+
+Serving no longer deletes the pizza. `GameManager.customer_node.eat(p)`
+reparents it to a mouth mount on the customer, then over 6 bites (~4.8 s) the
+arm lifts it to the mouth, the head nods with each chew, the pizza shrinks to
+nothing and is finally freed. (Scripts attached at runtime need an explicit
+`set_process(true)` for `_process` to run.)
 
 ### Pizza stages
 `DOUGH → SAUCED → CHEESED → TOPPED → BAKING → BAKED / BURNT`
 (the old `STRETCHED` stage was removed — stretching no longer applies)
 
 Layer heights: dough top `0.07`, sauce top `0.09`, cheese top `0.12`.
-Bake target 7 s, burns at `bake_target * 1.9`.
+Bake target 7 s, burns at `bake_target * 1.9`. While baking, `melt_cheese()`
+flattens and spreads the shreds, then fades in a thin, glossy translucent
+melted layer. The sauce disc is also thinned as it cooks (its top surface
+stays put), so the finished pizza no longer reads as a thick "hat". Burnt
+pizzas darken both.
 
-### Scoring
-`0.4 * toppings match + 0.4 * bake quality + 0.2 * speed`, 60 s per order.
+### Kneading minigame
+Dropping the dough on the prep table no longer leaves it ready to sauce. The
+camera eases into a close-up of the dough (`camera_rig.gd` `focus_on()`), the
+HUD shows **"KNEAD THE DOUGH - press K (n/5)"**, and only K is accepted until
+it is done (G/L and mouse-look are ignored). The character's movement is frozen
+while focused.
+
+`Pizza.knead()` counts the presses. The dough is a `SphereMesh` (radius `0.18`,
+height `0.36`) that is scaled outward in X/Z and down in Y on each press;
+after 5 presses it matches the `0.35` m, `0.07` m-tall base that the rest of the
+game expects. A Tween adds a small squash-and-stretch on each hit. Sauce is
+refused until `Pizza.kneaded` is true. Finishing snaps the camera back to the
+third-person view so station aiming is never left pointing at the prep table.
+
+Each order now lasts **5 minutes** (`GameManager.ORDER_SECONDS = 300`) instead
+of 60 seconds.
+
+### Sauce bottle
+The SAUCE station now holds a tapered red **bottle with a white cap** instead
+of a plain cylinder, and the held ingredient uses the same shape. Sauce is no
+longer a physics drop. Press **L** with the bottle at the prep table to enter a
+close-up like the kneading one, then **move the mouse in a circle**. The
+controller integrates the angle of a virtual cursor driven by mouse-relative
+motion; four full turns now fill the base, so the gesture is slower.
+`Pizza.set_sauce_spread()` grows the red
+sauce disc from a tiny dot to its full radius, and a small red marker follows
+the cursor over the dough. The E key was removed entirely.
+
+### Cheese shredding
+Cheese is no longer dropped as a solid disc. Pressing **L** with the cheese at
+the prep table starts another close-up; eight presses of **C** call
+`Pizza.cut_cheese()`, each scattering five short, thick yellow box "shreds"
+(`0.16 × 0.028 × 0.022`) over the sauce at random angles. `add_cheese()` now
+just finalises the stage, so toppings still require `CHEESED`. The sauce marker
+was also lowered to sit directly on the sauce layer rather than hovering above
+the dough. Its orbit was tightened (`SPREAD_MAX_RADIUS 0.16`, step `0.005`) so
+the marker stays near the middle, and the shreds were shrunk to
+`0.10 × 0.024 × 0.018` and clustered within `DOUGH_RADIUS * 0.45` of the centre.
+
+`Pizza.attach_topping()` now nudges each new topping away from the ones already
+on the base until it has a clear spot (min gap `TOPPING_RADIUS * 2`). This
+stops a mushroom dropped onto olive/pepperoni from clipping through them; a
+headless check measured pairwise gaps of 0.184–0.305 m after three toppings.
+The cheese shreds were lowered so their top is exactly `0.12`, matching the
+bottom of a topping (`top_y() + TOPPING_HEIGHT/2`), so toppings sit on the
+cheese instead of sinking into it.
+
+`camera_rig.clear_focus()` now sets a short mouse-settle window. Without it,
+the same circular mouse motions used to spread sauce continued straight into
+the orbit camera the moment the close-up ended.
+
+### Customer pose
+The customer's upper-arm rest offsets are slightly shallower than the chef's
+(`±0.72` instead of `±1.0` about BACK) so its hands no longer sink into the
+chair seat. While eating, **both** arms come up to hold the pizza — the right
+arm's lift delta is negated because its rest offset has the opposite sign.
+
+### Orders and scoring
+Orders are now **count-based**: `GameManager.ORDER_COUNTS` asks for 6 pepperoni,
+3 mushroom and 2 olive, and `required` holds one entry per item. The topping
+station hands out the next type whose count is still short, `Pizza.toppings`
+keeps duplicates, and scoring compares per-type counts (hit = sum of
+min(required, placed)). 300 s per order.
+
+`camera_rig` keeps extending `_mouse_settle` while mouse motion continues after
+a close-up, so the circles used to spread sauce can no longer spin the orbit
+camera once the view returns.
 
 ---
 
@@ -143,6 +275,10 @@ an item lands on exactly the declared surfaces and nothing else.
 | `Label3D.z_index` error | Not a valid property in Godot 4 | Changed to `render_priority` |
 | `GPUParticles3D.emission_rate` error | Not a valid property | Removed; used `process_material.emission_shape` instead |
 | Project would not run after deleting `.godot` | Assets needed re-importing | `godot --headless --import <project.godot>` |
+| Character sank into the outer counters when walking along the side wall | The movement clamp (`x ±7.2`, `z ≤5.4`) was *wider* than the station footprint, so after `move_and_slide` shoved the capsule out of a counter, the clamp teleported it straight back in | Tightened both `character.gd` and `camera_rig.gd` to `x ±6.6` / `z ≤4.0` — the capsule radius (0.3) short of the counter edges. Also fixed `kitchen_init.gd`, which still placed the serve counter at `x +6` while `main.tscn` has it at `x −6.3` |
+| Carried pizza clipped through the serve counter | It was held nearly vertical (`rotation −72°`) at chest height, so its near edge dipped below the 1.1 m counter top | Carry pose is now `(0, 1.40, −0.45)` with `−30°` tilt, keeping the lowest point above every counter top |
+| Chef hat filled the kneading close-up | The focus camera sat just behind the player at the same height as the white chef hat, so the hat occluded the dough | Focus camera now sits in front of and above the player (`focus_point + (0, 1.55, −0.85)`), looking steeply down; station labels are hidden during the close-up too |
+| Toppings floated above the pizza after pickup | The drop surface cylinder was *centred* on the pizza's top layer, so its top face was 4 cm higher than the real base; the prep-table surface was also slightly above the pizza | The cylinder centre is now `top_y − height/2` so its top face matches the pizza, and the table surface is omitted whenever a pizza is on the table. `Pizza.attach_topping()` also snaps every topping flat onto the surface (and clamps it inside the base), so a tilted or high drop can never leave the olive hovering |
 
 ---
 

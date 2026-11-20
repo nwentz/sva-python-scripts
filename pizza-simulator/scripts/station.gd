@@ -49,6 +49,9 @@ func setup_station(kind: int, label: String, ingredient: String) -> void:
 		"ingredient": ingredient
 	}
 	if is_inside_tree():
+		# The node's _ready() built it with the default (DOUGH) kind. Rebuild
+		# now so e.g. the serve station gets its round table and collider.
+		_build()
 		_refresh()
 
 ## Uses a 3D model instead of the plain box. The model is scaled to `size`
@@ -75,15 +78,24 @@ func _build() -> void:
 
 	if _model_path != "":
 		_build_model()
+	elif kind == Kind.COUNTER:
+		_build_round_table()
 	else:
 		_build_box()
 
-	# The collision always matches the station's footprint.
+	# The collision always matches the station's footprint. The serve station
+	# is a round table, so give it a cylindrical collider.
 	var cs := CollisionShape3D.new()
 	cs.name = "CollisionShape3D"
-	var box := BoxShape3D.new()
-	box.size = _size
-	cs.shape = box
+	if kind == Kind.COUNTER:
+		var cyl := CylinderShape3D.new()
+		cyl.radius = COUNTER_RADIUS
+		cyl.height = _size.y
+		cs.shape = cyl
+	else:
+		var box := BoxShape3D.new()
+		box.size = _size
+		cs.shape = box
 	cs.position = Vector3(0, _size.y * 0.5, 0)
 	add_child(cs)
 
@@ -126,6 +138,40 @@ func _build_box() -> void:
 	mi.mesh = bm
 	mi.position = Vector3(0, _size.y * 0.5, 0)
 	add_child(mi)
+
+## The serve station is a round pedestal table instead of a grey box.
+const COUNTER_RADIUS := 0.78
+
+func _build_round_table() -> void:
+	var top := MeshInstance3D.new()
+	top.name = "TableTop"
+	var disc := CylinderMesh.new()
+	disc.top_radius = COUNTER_RADIUS
+	disc.bottom_radius = COUNTER_RADIUS
+	disc.height = 0.12
+	top.mesh = disc
+	top.position = Vector3(0, _size.y - 0.06, 0)
+	add_child(top)
+
+	var stem := MeshInstance3D.new()
+	stem.name = "TableStem"
+	var post := CylinderMesh.new()
+	post.top_radius = 0.10
+	post.bottom_radius = 0.14
+	post.height = _size.y - 0.12
+	stem.mesh = post
+	stem.position = Vector3(0, (_size.y - 0.12) * 0.5, 0)
+	add_child(stem)
+
+	var foot := MeshInstance3D.new()
+	foot.name = "TableFoot"
+	var base := CylinderMesh.new()
+	base.top_radius = 0.32
+	base.bottom_radius = 0.38
+	base.height = 0.07
+	foot.mesh = base
+	foot.position = Vector3(0, 0.035, 0)
+	add_child(foot)
 
 func _build_model() -> void:
 	var ps: PackedScene = load(_model_path)
@@ -216,7 +262,7 @@ func _refresh() -> void:
 		Kind.TOPPING: _material = StandardMaterial3D.new(); _material.albedo_color = Color(0.48, 0.48, 0.48)
 		Kind.PREP: _material = StandardMaterial3D.new(); _material.albedo_color = Color(0.65, 0.65, 0.65)
 		Kind.OVEN: _material = StandardMaterial3D.new(); _material.albedo_color = Color(0.30, 0.30, 0.30)
-		Kind.COUNTER: _material = StandardMaterial3D.new(); _material.albedo_color = Color(0.40, 0.40, 0.40)
+		Kind.COUNTER: _material = StandardMaterial3D.new(); _material.albedo_color = Color(0.44, 0.29, 0.19)
 		_: _material = StandardMaterial3D.new(); _material.albedo_color = Color(0.50, 0.50, 0.50)
 
 	for c in get_children():
@@ -293,12 +339,25 @@ func _ingredient_prop() -> void:
 	match ing:
 		"sauce":
 			col = Color(0.90, 0.06, 0.03)
-			var cyl := CylinderMesh.new()
-			cyl.top_radius = 0.22
-			cyl.bottom_radius = 0.22
-			cyl.height = 0.42
-			mi.mesh = cyl
+			var bottle := CylinderMesh.new()
+			bottle.top_radius = 0.10
+			bottle.bottom_radius = 0.19
+			bottle.height = 0.44
+			mi.mesh = bottle
 			mi.position = Vector3(0, 1.32, 0)
+			var cap := MeshInstance3D.new()
+			cap.name = "BottleCap"
+			var neck := CylinderMesh.new()
+			neck.top_radius = 0.055
+			neck.bottom_radius = 0.055
+			neck.height = 0.10
+			cap.mesh = neck
+			cap.position = Vector3(0, 0.27, 0)
+			var cap_mat := StandardMaterial3D.new()
+			cap_mat.albedo_color = Color(0.82, 0.82, 0.84)
+			cap_mat.roughness = 0.5
+			cap.material_override = cap_mat
+			mi.add_child(cap)
 		"cheese":
 			col = Color(1.0, 0.76, 0.0)
 			var block := BoxMesh.new()
@@ -308,18 +367,18 @@ func _ingredient_prop() -> void:
 		"pepperoni":
 			col = Color(0.70, 0.04, 0.05)
 			var disc := CylinderMesh.new()
-			disc.top_radius = 0.28
-			disc.bottom_radius = 0.28
-			disc.height = 0.10
+			disc.top_radius = 0.17
+			disc.bottom_radius = 0.17
+			disc.height = 0.08
 			mi.mesh = disc
-			mi.position = Vector3(0, 1.18, 0)
+			mi.position = Vector3(0, 1.16, 0)
 		_:
 			col = Color(0.97, 0.88, 0.55)
 			var ball := SphereMesh.new()
-			ball.radius = 0.26
-			ball.height = 0.52
+			ball.radius = 0.15
+			ball.height = 0.30
 			mi.mesh = ball
-			mi.position = Vector3(0, 1.26, 0)
+			mi.position = Vector3(0, 1.20, 0)
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = col
 	mat.roughness = 0.6

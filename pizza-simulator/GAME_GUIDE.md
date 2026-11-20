@@ -15,8 +15,11 @@ A fast-paced pizza making simulation where you must fulfill customer orders by a
 | **Jump** | SPACE |
 | **Look Around** | Mouse |
 | **Interact / Grab** | G or Left Click |
-| **Drop topping on counter** | L |
-| **Toggle Mouse** | ESC |
+| **Drop item / pizza** | L |
+| **Knead the dough** | K (press 5 times) |
+| **Spread the sauce** | L to start, then move the mouse in circles |
+| **Cut the cheese** | L to start, then press C eight times |
+| **Toggle Mouse / exit close-up** | ESC |
 
 ## 🕹️ Gameplay Loop
 
@@ -24,27 +27,35 @@ A fast-paced pizza making simulation where you must fulfill customer orders by a
 1. Look at DOUGH_STATION (left side)
 2. Press **G** to pick up the dough
 3. Move to the PREP_TABLE (center)
-4. Press **L** to drop the dough onto the table - it falls into place
+4. Press **L** to drop the dough ball onto the table - the camera zooms in on it
+5. Press **K** five times to knead. The ball gets flatter and wider with every
+   press until it is a full pizza base; the HUD shows the press counter.
+   The normal camera returns automatically when the dough is ready.
 
 > Walk right up to a counter before pressing **G** - every station is reachable,
 > including the DOUGH station at the far left end of the row.
 
 ### Step 2: Sauce
-1. Look at SAUCE_STATION and press **G** to grab the sauce
+1. Look at SAUCE_STATION and press **G** to grab the **sauce bottle**
 2. Return to the PREP_TABLE
-3. Press **L** to drop the sauce onto the dough
+3. Press **L** at the prep table - the camera zooms in, then **move the mouse
+   in a circle** over the dough to spread the sauce slowly (about four full turns).
+   There is no E key for this.
 
 ### Step 3: Cheese
 1. Look at CHEESE_STATION and press **G** to grab the cheese
 2. Return to the PREP_TABLE
-3. Press **L** to drop the cheese onto the sauce
+3. Press **L** at the prep table - the camera zooms in again
+4. Press **C** eight times to cut the cheese. Short, thick yellow shreds are
+   scattered over the sauce with each press.
 
 ### Step 4: Toppings
 1. Look at TOPPING_STATION and press **G** to grab a topping
    (the station hands you whichever topping your current order still needs)
 2. Return to the PREP_TABLE
 3. Press **L** to drop the topping onto the cheese
-4. Repeat for each topping your order requires
+4. Repeat until every topping count in the order is met (6 pepperoni,
+   3 mushroom, 2 olive)
 
 ### Step 5: Bake (OVEN)
 1. Press **G** at the PREP_TABLE to pick the pizza up
@@ -54,8 +65,10 @@ A fast-paced pizza making simulation where you must fulfill customer orders by a
 4. Press **G** again at the oven when it says "Pizza is done!"
 
 ### Step 6: Serve (COUNTER)
-1. Carry the baked pizza to the SERVE COUNTER (right side)
-2. Press **G** to serve it
+1. Carry the baked pizza to the round **SERVE** table (right side) - a customer
+   is waiting in the chair beside it
+2. Press **G** to serve it - the customer takes the pizza and eats it, bite by
+   bite, while the score is awarded
 3. Get points!
 
 > **Tip:** Dropped items fall with real physics, so aim at the pizza before
@@ -63,12 +76,17 @@ A fast-paced pizza making simulation where you must fulfill customer orders by a
 
 ## 📊 Order System
 
-Each order requires specific toppings:
-- **Simple order:** 1 ingredient
-- **Medium order:** 2 ingredients
-- **Complex order:** 3 ingredients
+Each order asks for **quantities** of toppings, not just types:
+- **Pepperoni ×6**
+- **Mushroom ×3**
+- **Olive ×2**
 
-**Time limit:** 60 seconds per order
+The TOPPINGS station hands you whichever kind still needs more copies, and the
+HUD shows the remaining counts. A missing or extra copy lowers the topping
+score.
+
+**Time limit:** 5 minutes (300 seconds) per order - enough time to knead the
+dough and build the pizza without rushing.
 
 ## 🏆 Scoring
 
@@ -133,8 +151,8 @@ PREP TABLE -> OVEN -> SERVE**.
   - Black = Counter
 
 - **Pizza stages:**
-  - Raw dough = Small, pale
-  - Stretched = Large, flat
+  - Raw dough = pale ball, gets flatter and wider with each K press
+  - Kneaded = large, flat base
   - Sauced = Red sauce visible
   - Cheesed = Cheese visible
   - Topped = Toppings added
@@ -144,7 +162,7 @@ PREP TABLE -> OVEN -> SERVE**.
 
 ## ⚠️ Common Mistakes
 
-1. **Forgot to stretch dough** → Can't apply ingredients
+1. **Forgot to knead the dough** → Sauce is refused until 5 K presses
 2. **Baked too early** → Undercooked (low score)
 3. **Baked too late** → Burnt (0 points)
 4. **Missing ingredients** → Order fails

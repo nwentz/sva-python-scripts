@@ -38,15 +38,252 @@ func _gesture(action: String) -> void:
 		_char.play_action(action)
 
 func _unhandled_input(e: InputEvent) -> void:
+	# ESC is also the escape hatch for any of the close-up minigames, so a
+	# player who is stuck in the knead/sauce/cheese view can get back to the
+	# normal third-person camera and mouse control.
+	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_ESCAPE:
+		if _cancel_closeup():
+			return
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		return
+	var spreading := GameManager.spreading_pizza != null
+	if spreading and e is InputEventMouseMotion:
+		_spread_motion((e as InputEventMouseMotion).relative)
+		return
+	var kneading := GameManager.kneading_pizza != null
+	var cutting := GameManager.cutting_cheese != null
+	var busy := kneading or spreading or cutting
 	if e is InputEventKey and e.pressed and not e.echo:
+		if cutting:
+			if e.keycode == KEY_C:
+				_cut_cheese()
+			else:
+				GameManager.set_hint("Press C to cut the cheese.")
+			return
+		if spreading:
+			GameManager.set_hint("Keep moving the mouse in circles to spread the sauce.")
+			return
+		if e.keycode == KEY_K:
+			_knead()
+			return
+		if kneading and (e.keycode == KEY_G or e.keycode == KEY_L):
+			GameManager.set_hint("Finish kneading the dough first - press K.")
+			return
 		if e.keycode == KEY_G:
 			_interact()
 		elif e.keycode == KEY_L:
 			_drop()
 	elif e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
+		if busy:
+			return
 		_interact()
+
+## Pressing K works the dough once. When it is kneaded the camera eases back
+## out to the normal third-person view and sauce is unlocked.
+func _knead() -> void:
+	var p := GameManager.kneading_pizza
+	if p == null or not is_instance_valid(p) or p.kneaded:
+		return
+	p.knead()
+	if p.kneaded:
+		GameManager.finish_knead()
+		_set_station_labels(true)
+		var rig := _camera_rig()
+		if rig != null and rig.has_method("clear_focus"):
+			rig.clear_focus()
+		_gesture("place")
+		GameManager.set_hint("Dough kneaded! Now grab the sauce.")
+	else:
+		GameManager.set_hint("Knead the dough: %d/%d - press K again." % [p.kneads, Pizza.KNEADS_REQUIRED])
+
+## Spreading sauce is a close-up minigame like kneading: the player moves the
+## mouse in a circle over the dough and the sauce disc grows with each turn.
+const SPREAD_ROTATIONS := 4
+## Keep the virtual cursor near the middle of the dough, not out at the edge.
+const SPREAD_STEP := 0.005
+const SPREAD_MIN_RADIUS := 0.03
+const SPREAD_MAX_RADIUS := 0.16
+var _spread_cursor := Vector2.ZERO
+var _spread_last_angle := 0.0
+var _spread_accum := 0.0
+var _spread_turns := 0
+var _spread_started := false
+var _spreader: MeshInstance3D = null
+
+func _start_spreading() -> void:
+	if GameManager.kneading_pizza != null or GameManager.spreading_pizza != null:
+		return
+	var table := _prep_table()
+	if table == null or table.placed_pizza == null:
+		GameManager.set_hint("Put the dough on the prep table first.")
+		return
+	if _char != null and _char.global_position.distance_to(table.global_position) > 2.8:
+		GameManager.set_hint("Stand by the prep table to spread the sauce.")
+		return
+	var p := table.placed_pizza
+	if not p.kneaded:
+		GameManager.set_hint("Knead the dough first - press K.")
+		return
+	if p.stage != Pizza.Stage.DOUGH:
+		GameManager.set_hint("Sauce goes on the plain dough.")
+		return
+	GameManager.spreading_pizza = p
+	p.set_sauce_spread(0.02)
+	_spread_cursor = Vector2.ZERO
+	_spread_last_angle = 0.0
+	_spread_accum = 0.0
+	_spread_turns = 0
+	_spread_started = false
+	_set_station_labels(false)
+	var rig := _camera_rig()
+	if rig != null and rig.has_method("focus_on"):
+		rig.focus_on(p)
+	# A small marker that follows the mouse circle over the dough.
+	if _spreader == null:
+		_spreader = MeshInstance3D.new()
+		_spreader.name = "SauceSpreader"
+		var sm := CylinderMesh.new()
+		sm.top_radius = 0.05
+		sm.bottom_radius = 0.05
+		sm.height = 0.016
+		_spreader.mesh = sm
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(0.90, 0.06, 0.03)
+		_spreader.material_override = mat
+		add_child(_spreader)
+	_spreader.global_position = p.global_position + Vector3(0, Pizza.SAUCE_TOP + 0.01, 0)
+	GameManager.set_hint("USE MOUSE TO SPREAD SAUCE - move in circles (0%%)")
+
+## Accumulate the angle of a virtual cursor driven by mouse-relative motion.
+func _spread_motion(rel: Vector2) -> void:
+	var p := GameManager.spreading_pizza
+	if p == null or not is_instance_valid(p):
+		return
+	if rel.length() > 60.0:
+		return  # pointer warp, not a real movement
+	_spread_cursor = (_spread_cursor + rel * SPREAD_STEP).limit_length(SPREAD_MAX_RADIUS)
+	if _spreader != null:
+		# Sit directly on the sauce layer, not floating above the dough.
+		_spreader.global_position = p.global_position + Vector3(_spread_cursor.x, Pizza.SAUCE_TOP + 0.01, _spread_cursor.y)
+	if _spread_cursor.length() < SPREAD_MIN_RADIUS:
+		return
+	var ang := atan2(_spread_cursor.y, _spread_cursor.x)
+	if not _spread_started:
+		_spread_started = true
+		_spread_last_angle = ang
+		return
+	var d := ang - _spread_last_angle
+	if d > PI:
+		d -= TAU
+	elif d < -PI:
+		d += TAU
+	_spread_last_angle = ang
+	_spread_accum += d
+	while absf(_spread_accum) >= TAU:
+		_spread_accum -= signf(_spread_accum) * TAU
+		_spread_turns += 1
+		p.set_sauce_spread(minf(float(_spread_turns) / float(SPREAD_ROTATIONS), 1.0))
+		GameManager.set_hint("USE MOUSE TO SPREAD SAUCE - move in circles (%d%%)" % int(100.0 * p.sauce_spread))
+		if _spread_turns >= SPREAD_ROTATIONS:
+			_finish_spreading()
+			return
+
+func _finish_spreading() -> void:
+	var p := GameManager.spreading_pizza
+	if p != null and is_instance_valid(p):
+		p.add_sauce()
+	GameManager.spreading_pizza = null
+	if _spreader != null:
+		_spreader.queue_free()
+		_spreader = null
+	_set_station_labels(true)
+	var rig := _camera_rig()
+	if rig != null and rig.has_method("clear_focus"):
+		rig.clear_focus()
+	GameManager.set_hands_ingredient("")
+	_clear_held()
+	_gesture("place")
+	GameManager.set_hint("Sauce spread! Now grab the cheese.")
+
+## Cheese gets its own close-up: press C repeatedly to shred it over the
+## sauced base. Each press scatters more thick yellow strands.
+func _start_cutting() -> void:
+	if GameManager.kneading_pizza != null or GameManager.spreading_pizza != null or GameManager.cutting_cheese != null:
+		return
+	var table := _prep_table()
+	if table == null or table.placed_pizza == null:
+		GameManager.set_hint("Put the dough on the table first.")
+		return
+	if _char != null and _char.global_position.distance_to(table.global_position) > 2.8:
+		GameManager.set_hint("Stand by the prep table to cut the cheese.")
+		return
+	var p := table.placed_pizza
+	if p.stage != Pizza.Stage.SAUCED:
+		GameManager.set_hint("Spread the sauce first.")
+		return
+	GameManager.cutting_cheese = p
+	_set_station_labels(false)
+	var rig := _camera_rig()
+	if rig != null and rig.has_method("focus_on"):
+		rig.focus_on(p)
+	_prompt_cheese_cut(p)
+
+func _prompt_cheese_cut(p: Pizza) -> void:
+	GameManager.set_hint("PRESS C TO CUT CHEESE - shreds: %d/%d" % [p.cheese_cuts, Pizza.CHEESE_CUTS_REQUIRED])
+
+func _cut_cheese() -> void:
+	var p := GameManager.cutting_cheese
+	if p == null or not is_instance_valid(p):
+		return
+	p.cut_cheese()
+	if p.cheese_ready:
+		_finish_cutting()
+	else:
+		_prompt_cheese_cut(p)
+
+func _finish_cutting() -> void:
+	var p := GameManager.cutting_cheese
+	if p != null and is_instance_valid(p):
+		p.add_cheese()
+	GameManager.cutting_cheese = null
+	_set_station_labels(true)
+	var rig := _camera_rig()
+	if rig != null and rig.has_method("clear_focus"):
+		rig.clear_focus()
+	GameManager.set_hands_ingredient("")
+	_clear_held()
+	_gesture("place")
+	GameManager.set_hint("Cheese sprinkled. Now add the toppings.")
+
+## Leave whichever close-up is active and restore the normal view.
+func _cancel_closeup() -> bool:
+	if GameManager.kneading_pizza == null and GameManager.spreading_pizza == null and GameManager.cutting_cheese == null:
+		return false
+	GameManager.kneading_pizza = null
+	GameManager.spreading_pizza = null
+	GameManager.cutting_cheese = null
+	_set_station_labels(true)
+	if _spreader != null:
+		_spreader.queue_free()
+		_spreader = null
+	var rig := _camera_rig()
+	if rig != null and rig.has_method("clear_focus"):
+		rig.clear_focus()
+	GameManager.set_hint("Close-up closed. Press G at the prep table to pick the pizza back up.")
+	return true
+
+func _camera_rig() -> Node:
+	if _char == null or not is_instance_valid(_char):
+		return null
+	return _char.get("camera_rig") as Node
+
+## Station name labels are huge in the dough close-up, so hide them while
+## kneading and put them back when the normal view returns.
+func _set_station_labels(visible: bool) -> void:
+	for s in _all_stations():
+		var lbl := (s as Node3D).get_node_or_null("Label3D") as Label3D
+		if lbl != null:
+			lbl.visible = visible
 
 # --- targeting ---
 
@@ -214,8 +451,12 @@ func _marker(pos: Vector3) -> void:
 
 func _hold(p: Pizza) -> void:
 	p.reparent(_char, false)
-	p.position = Vector3(0, 1.15, -0.55)
-	p.rotation_degrees = Vector3(-72, 0, 0)
+	# Carried a little in front of the chest and only slightly tilted. The
+	# old pose was nearly vertical and low, so the pizza's near edge sank
+	# into the serve counter as the player walked up to it. At y 1.40 the
+	# lowest point stays above the 1.1 m counter top no matter the station.
+	p.position = Vector3(0, 1.40, -0.45)
+	p.rotation_degrees = Vector3(-30, 0, 0)
 	_gesture("grab")
 
 func _show_held(ing: String) -> void:
@@ -250,16 +491,19 @@ func _next_topping(st: KitchenStation) -> String:
 	var g := GameManager
 	var table := _prep_table()
 	var placed: Pizza = table.placed_pizza if table != null else null
-	var have: Array[String] = []
+	var have_counts := {}
 	if placed != null:
-		have.assign(placed.toppings)
-	var needed: Array[String] = []
+		for t in placed.toppings:
+			have_counts[t] = int(have_counts.get(t, 0)) + 1
+	var need_counts := {}
 	for t in g.required:
-		if not have.has(t) and not needed.has(t):
-			needed.append(t)
-	if needed.is_empty():
-		return ""
-	return needed[0]
+		need_counts[t] = int(need_counts.get(t, 0)) + 1
+	# Hand out the first type whose required count is not met yet, preserving
+	# the order in which the order was built (pepperoni, mushroom, olive).
+	for t in g.required:
+		if int(have_counts.get(t, 0)) < int(need_counts.get(t, 0)):
+			return t
+	return ""
 
 func _counter() -> KitchenStation:
 	for s in _all_stations():
@@ -287,7 +531,12 @@ func _use(st: KitchenStation, hit: Dictionary) -> void:
 				return
 			g.set_hands_ingredient(st.ingredient)
 			_show_held(st.ingredient)
-			g.set_hint("Holding %s. Drop it on the prep table with L." % st.ingredient.capitalize())
+			if st.ingredient == "sauce":
+				g.set_hint("Sauce bottle in hand. Stand by the prep table and press L, then move the mouse in circles.")
+			elif st.ingredient == "cheese":
+				g.set_hint("Cheese in hand. Stand by the prep table and press L, then press C to cut it.")
+			else:
+				g.set_hint("Holding %s. Drop it on the prep table with L." % st.ingredient.capitalize())
 		KitchenStation.Kind.TOPPING:
 			if g.hands_pizza != null:
 				g.set_hint("Your hands are full.")
@@ -325,7 +574,12 @@ func _prep(st: KitchenStation) -> void:
 		_hold(p)
 		g.set_hint("Pizza in hand.")
 		return
-	g.set_hint("Drop the %s onto the pizza with L." % g.hands_ingredient.capitalize())
+	if g.hands_ingredient == "sauce":
+		g.set_hint("Press L to start spreading, then move the mouse in circles.")
+	elif g.hands_ingredient == "cheese":
+		g.set_hint("Press L to start cutting, then press C to shred the cheese.")
+	else:
+		g.set_hint("Drop the %s onto the pizza with L." % g.hands_ingredient.capitalize())
 
 # --- dropping ---
 
@@ -348,6 +602,15 @@ func _drop() -> void:
 		g.set_hands_pizza(null)
 		_gesture("place")
 		_drop_pizza(p, table)
+		return
+
+	# Sauce is spread with the mouse, not dropped - it is a bottle, not a
+	# topping. L starts the close-up spreading minigame.
+	if g.hands_ingredient == "sauce":
+		_start_spreading()
+		return
+	if g.hands_ingredient == "cheese":
+		_start_cutting()
 		return
 
 	# Dropping an ingredient: it falls onto whatever is on the table.
@@ -376,19 +639,36 @@ func _drop_pizza(p: Pizza, table: KitchenStation) -> void:
 	p.reparent(table.anchor, false)
 	p.position = Vector3.ZERO
 	p.rotation_degrees = Vector3.ZERO
-	GameManager.set_hint("Dough on the prep table. Now grab the sauce.")
+	# The dough has to be kneaded before anything can go on it. Zoom in and
+	# hand control to the K-key minigame until it is worked enough.
+	GameManager.start_knead(p)
+	_set_station_labels(false)
+	var rig := _camera_rig()
+	if rig != null and rig.has_method("focus_on"):
+		rig.focus_on(p)
+	GameManager.set_hint("Press K to knead the dough (0/%d)." % Pizza.KNEADS_REQUIRED)
 
-## The surfaces a dropped item can land on: the prep table top, the room floor
-## and (when topping the pizza) the pizza's own top layer.
+## The surfaces a dropped item can land on. While a pizza is on the table the
+## table top is deliberately omitted: its top face sits slightly *above* the
+## pizza base, so ingredients could land on the table and then appear to float
+## next to (or above) the pizza once it was picked up.
 func _surfaces_for(table: KitchenStation, pizza: Pizza) -> Array:
 	var out: Array = []
-	var top := table.global_position + Vector3(0, 1.1, 0)
-	out.append(PhysicsDropper.Surface.box(top, Vector3(1.4, 0.2, 1.4)))
+	if pizza == null:
+		var top := table.global_position + Vector3(0, 1.1, 0)
+		out.append(PhysicsDropper.Surface.box(top, Vector3(1.4, 0.2, 1.4)))
 	out.append(PhysicsDropper.Surface.box(Vector3(0, -0.1, 0), Vector3(18, 0.2, 20)))
 	if pizza != null:
-		# The pizza's own top layer, so toppings land on the cheese.
-		var p_top := pizza.global_position + Vector3(0, pizza.top_y(), 0)
-		out.append(PhysicsDropper.Surface.cyl(p_top, Pizza.DOUGH_RADIUS, 0.08))
+		# A cylinder's *top face* is centre.y + height/2. Put that face exactly
+		# at the pizza's top layer, not centre it there (which used to leave
+		# toppings hovering 4 cm in the air after pickup).
+		const SURFACE_H := 0.08
+		var p_top := pizza.global_position + Vector3(0, pizza.top_y() - SURFACE_H * 0.5, 0)
+		out.append(PhysicsDropper.Surface.cyl(p_top, Pizza.DOUGH_RADIUS, SURFACE_H))
+		# The toppings that are already on it, so the next one rests on top
+		# of them instead of sinking into them.
+		for t in pizza.placed_topping_surfaces():
+			out.append(PhysicsDropper.Surface.cyl(t["center"], t["radius"], t["height"]))
 	return out
 
 func _drop_ingredient(ing: String, table: KitchenStation) -> void:
@@ -396,22 +676,36 @@ func _drop_ingredient(ing: String, table: KitchenStation) -> void:
 	if p == null:
 		GameManager.set_hint("Put the dough on the table first.")
 		return
-	# Enforce the intended order.
+	# Enforce the intended order. Kneading comes before any ingredient.
+	if not p.kneaded:
+		GameManager.set_hint("Knead the dough first - press K.")
+		return
 	if ing == "sauce" and p.stage != Pizza.Stage.DOUGH:
 		GameManager.set_hint("Sauce goes on the plain dough.")
 		return
 	if ing == "cheese" and p.stage != Pizza.Stage.SAUCED:
 		GameManager.set_hint("Cheese goes on the sauce.")
 		return
-	if ing != "sauce" and ing != "cheese" and p.stage != Pizza.Stage.CHEESED:
-		GameManager.set_hint("Toppings go on the cheese.")
-		return
+	if ing != "sauce" and ing != "cheese":
+		# A pizza can carry several toppings, so both the cheesed stage and
+		# the topped stage are allowed here. Requiring CHEESED would refuse
+		# every topping after the first one.
+		if p.stage != Pizza.Stage.CHEESED and p.stage != Pizza.Stage.TOPPED:
+			GameManager.set_hint("Toppings go on the cheese.")
+			return
 
 	var mi := Pizza.make_ingredient_mesh(ing)
 	mi.name = "DroppedIngredient"
 	add_child(mi)
 	# Start the drop just above the pizza so it falls onto the right layer.
-	mi.global_position = p.global_position + Vector3(randf_range(-0.12, 0.12), 0.55, randf_range(-0.12, 0.12))
+	# Toppings are scattered over the whole base instead of always landing
+	# in the middle, so several of them fit side by side.
+	if ing == "sauce" or ing == "cheese":
+		mi.global_position = p.global_position + Vector3(0, 0.55, 0)
+	else:
+		var ang := randf() * TAU
+		var rad := sqrt(randf()) * Pizza.TOPPING_SPREAD
+		mi.global_position = p.global_position + Vector3(cos(ang) * rad, 0.55, sin(ang) * rad)
 	_dropper.drop(mi, _surfaces_for(table, p))
 	await _dropper.dropped
 	var res: Dictionary = _dropper.last_result
@@ -475,4 +769,10 @@ func _serve(_st: KitchenStation) -> void:
 	g.set_hands_pizza(null)
 	_gesture("serve")
 	g.serve(p)
-	p.queue_free()
+	# The customer eats the pizza bite by bite rather than it vanishing. The
+	# fallback only applies if no customer rig was built.
+	var cust := g.customer_node
+	if cust != null and is_instance_valid(cust) and cust.has_method("eat"):
+		cust.call("eat", p)
+	else:
+		p.queue_free()

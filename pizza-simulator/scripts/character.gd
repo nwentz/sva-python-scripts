@@ -8,11 +8,15 @@ const ACCELERATION := 10.0
 const FRICTION := 15.0
 
 # Keep the character inside the kitchen. The bounds must leave the player
-# able to walk up to every station (the outermost counters sit at x = +-6.3),
-# so they only stop short of the walls. These match camera_rig.gd.
-const BOUNDS_X := 7.2
+# able to walk up to every station (the outermost counters sit at x = +-6.3
+# and their front faces at z = 4.3), but never *into* one. The capsule has a
+# radius of 0.3, so the centre has to stop 0.3 short of a counter's edge.
+# Without this the controller's own clamp would shove the player back into
+# the outer stations while they walk along the side wall. These match
+# camera_rig.gd.
+const BOUNDS_X := 6.6
 const BOUNDS_Z_MIN := -2.9
-const BOUNDS_Z_MAX := 5.4
+const BOUNDS_Z_MAX := 4.0
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
@@ -184,6 +188,12 @@ func _update_animation(delta: float) -> void:
 		_rig.position.y = absf(cos(ph)) * 0.045 * _walk_amount
 
 func _physics_process(delta: float) -> void:
+	# During the kneading close-up the player stands still while they work
+	# the dough; the camera rig owns the view for that moment.
+	if camera_rig != null and is_instance_valid(camera_rig) and camera_rig.get("focus_target") != null:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		return
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
 	elif Input.is_key_pressed(KEY_SPACE):

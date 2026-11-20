@@ -21,7 +21,7 @@ func initialize_stations() -> void:
 		# turns its front towards the room.
 		{"name": "OVEN", "kind": 5, "label": "OVEN", "ing": "", "pos": Vector3(0, 0, 5),
 			"model": "res://models/Pizza-Oven.glb", "size": Vector3(1.5, 1.0, 0.9), "yaw": 90.0},
-		{"name": "COUNTER", "kind": 6, "label": "SERVE", "ing": "", "pos": Vector3(6, 0, 5)}
+		{"name": "COUNTER", "kind": 6, "label": "SERVE", "ing": "", "pos": Vector3(-6.3, 0, 5)}
 	]
 
 	var total_stations := len(stations)

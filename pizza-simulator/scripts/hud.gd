@@ -9,6 +9,7 @@ var _hint: Label
 var _keys: Label
 var _flash: Label
 var _oven: Label
+var _knead: Label
 var _timer_bar: ColorRect
 var _timer_t := 0.0
 var _flash_t := 0.0
@@ -18,6 +19,8 @@ func _ready() -> void:
 	_score = _mk(24, 92, 760, 40, 20)
 	_time = _mk(24, 134, 760, 40, 20)
 	_oven = _mk(24, 176, 900, 40, 22)
+	_knead = _mk(24, 218, 900, 44, 26)
+	_knead.add_theme_color_override("font_color", Color(1.0, 0.86, 0.35))
 	_hands = _mk(24, 618, 900, 40, 20)
 	_hint = _mk(24, 660, 1140, 44, 20)
 	_keys = _mk(24, 584, 1140, 34, 16)
@@ -29,7 +32,7 @@ func _ready() -> void:
 	_timer_bar.modulate = Color(0.4, 0.8, 1)
 	add_child(_timer_bar)
 	_flash.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_keys.text = "G = grab / interact     L = drop onto the prep table     WASD = move     SHIFT = sprint     SPACE = jump     ESC = free mouse"
+	_keys.text = "G = grab/interact     L = drop/start minigames     K = knead     MOUSE = spread sauce     C = cut cheese     WASD = move     SHIFT = sprint     SPACE = jump     ESC = free mouse"
 
 	GameManager.order_changed.connect(_refresh)
 	GameManager.hands_changed.connect(_refresh)
@@ -53,14 +56,20 @@ func _refresh() -> void:
 	var g := GameManager
 	var pretty := {"pepperoni": "Pepperoni", "mushroom": "Mushroom", "olive": "Olives"}
 	var parts: Array[String] = []
+	var counts := {}
 	for t in g.required:
-		parts.append(str(pretty.get(t, t)))
+		counts[t] = int(counts.get(t, 0)) + 1
+	for t in counts:
+		parts.append("%s x%d" % [str(pretty.get(t, t)), int(counts[t])])
 	_order.text = "ORDER: " + (", ".join(parts) if parts.size() else "waiting...")
 	_score.text = "Score: %d      Pizzas served: %d" % [g.score, g.served]
 
 	var p = g.hands_pizza
 	if p:
-		_hands.text = "Hands: pizza (%s)" % _stage_name(p.stage)
+		var stage_name := _stage_name(p.stage)
+		if p.stage == Pizza.Stage.DOUGH and p.kneaded:
+			stage_name = "kneaded dough"
+		_hands.text = "Hands: pizza (%s)" % stage_name
 	elif g.hands_ingredient != "":
 		_hands.text = "Hands: %s" % g.hands_ingredient.capitalize()
 	else:
@@ -95,6 +104,20 @@ func _update_oven() -> void:
 func _process(delta: float) -> void:
 	_time.text = "Order time left: %.0f s" % GameManager.time_left
 	_update_oven()
+
+	# Prompt during the kneading close-up, with a live press counter.
+	var p := GameManager.kneading_pizza
+	if p != null and is_instance_valid(p) and not p.kneaded:
+		_knead.text = "KNEAD THE DOUGH - press K  (%d / %d)" % [p.kneads, Pizza.KNEADS_REQUIRED]
+	else:
+		var sp := GameManager.spreading_pizza
+		var ch := GameManager.cutting_cheese
+		if sp != null and is_instance_valid(sp):
+			_knead.text = "USE MOUSE TO SPREAD SAUCE - move in circles  (%d%%)" % int(100.0 * sp.sauce_spread)
+		elif ch != null and is_instance_valid(ch):
+			_knead.text = "PRESS C TO CUT CHEESE - shreds  (%d / %d)" % [ch.cheese_cuts, Pizza.CHEESE_CUTS_REQUIRED]
+		else:
+			_knead.text = ""
 
 	# Update timer bar
 	_timer_t = GameManager.time_left / GameManager.order_time

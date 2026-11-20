@@ -130,14 +130,30 @@ func _run() -> void:
 	await _drop()
 	var table := _station("PREP TABLE")
 	print("  table.placed_pizza=", table.placed_pizza)
+	# Kneading is now required before sauce; work through the K minigame.
+	await _knead_dough()
+	print("  kneaded=", table.placed_pizza.kneaded if table.placed_pizza else false,
+		" presses=", table.placed_pizza.kneads if table.placed_pizza else -1)
 
 	await _step("SAUCE", "interact")
 	print("  hands_ingredient=", GameManager.hands_ingredient)
-	await _drop()
+	# The sauce bottle is spread by circling the mouse in the close-up.
+	await _step("PREP TABLE", "interact")
+	inter.call("_drop")  # L starts the spreading close-up
+	await get_tree().process_frame
+	for i in 144:
+		var a := TAU * float(i) / 24.0
+		inter.call("_spread_motion", Vector2(cos(a), sin(a)) * 8.0)
+	await get_tree().process_frame
 	print("  stage=", table.placed_pizza.stage if table.placed_pizza else -1)
 
 	await _step("CHEESE", "interact")
-	await _drop()
+	# Cheese is cut with C in its own close-up, not dropped.
+	await _step("PREP TABLE", "interact")
+	inter.call("_drop")  # L starts the cutting close-up
+	for i in Pizza.CHEESE_CUTS_REQUIRED:
+		inter.call("_cut_cheese")
+		await get_tree().process_frame
 	print("  stage=", table.placed_pizza.stage if table.placed_pizza else -1)
 
 	for i in GameManager.required.size():
@@ -223,8 +239,13 @@ func _step(label: String, _kind: String) -> void:
 
 func _drop() -> void:
 	inter.call("_drop")
-	await get_tree().create_timer(1.0).timeout
+	await get_tree().create_timer(2.0).timeout
 	await get_tree().process_frame
+
+func _knead_dough() -> void:
+	for i in Pizza.KNEADS_REQUIRED:
+		inter.call("_knead")
+		await get_tree().process_frame
 
 func _debug_pick() -> void:
 	var c := get_viewport().get_camera_3d()

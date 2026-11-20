@@ -6,16 +6,34 @@ signal order_changed
 signal score_changed(value: int)
 signal hint_changed(text: String)
 signal feedback(text: String, good: bool)
+signal knead_changed(p: Pizza)
 
 const TOPPINGS := ["pepperoni", "mushroom", "olive"]
+## Orders can ask for several of the same topping. `required` stores one entry
+## per item, so counts are simply repeated entries.
+const ORDER_COUNTS := {"pepperoni": 6, "mushroom": 3, "olive": 2}
+## Five minutes per pizza - enough time to knead, build and bake without
+## rushing the new cooking steps.
+const ORDER_SECONDS := 300.0
 
 var score := 0
 var served := 0
-var time_left := 60.0
-var order_time := 60.0
+var time_left := ORDER_SECONDS
+var order_time := ORDER_SECONDS
 var required: Array[String] = []
 var hands_ingredient := ""
 var hands_pizza: Pizza = null
+## The pizza currently being kneaded. While set, the camera is zoomed in on
+## it and only K is accepted as gameplay input.
+var kneading_pizza: Pizza = null
+## While this is set the camera is zoomed in and the player spreads sauce by
+## moving the mouse in circles.
+var spreading_pizza: Pizza = null
+## Set while the C-key cheese cutting close-up is active.
+var cutting_cheese: Pizza = null
+## The seated customer at the serve table, used to play the eating animation
+## instead of deleting a served pizza.
+var customer_node: Node = null
 var hint := ""
 
 var _rng := RandomNumberGenerator.new()
@@ -25,6 +43,13 @@ func _ready() -> void:
 	new_order()
 
 func _process(delta: float) -> void:
+	if kneading_pizza != null and not is_instance_valid(kneading_pizza):
+		kneading_pizza = null
+		knead_changed.emit(null)
+	if spreading_pizza != null and not is_instance_valid(spreading_pizza):
+		spreading_pizza = null
+	if cutting_cheese != null and not is_instance_valid(cutting_cheese):
+		cutting_cheese = null
 	if time_left <= 0.0:
 		return
 	time_left = maxf(0.0, time_left - delta)
@@ -32,11 +57,19 @@ func _process(delta: float) -> void:
 		feedback.emit("Order expired!", false)
 		new_order()
 
+func start_knead(p: Pizza) -> void:
+	kneading_pizza = p
+	knead_changed.emit(p)
+
+func finish_knead() -> void:
+	kneading_pizza = null
+	knead_changed.emit(null)
+
 func new_order() -> void:
-	var pool: Array = TOPPINGS.duplicate()
 	required.clear()
-	for i in 1 + _rng.randi_range(0, 2):
-		required.append(str(pool.pop_at(_rng.randi_range(0, pool.size() - 1))))
+	for t in TOPPINGS:
+		for i in int(ORDER_COUNTS.get(t, 0)):
+			required.append(t)
 	time_left = order_time
 	order_changed.emit()
 
@@ -56,10 +89,17 @@ func set_hint(v: String) -> void:
 
 func serve(p: Pizza) -> void:
 	var have := p.toppings
-	var hit := 0
+	# Count-based comparison: each required pepperoni/mushroom/olive is a
+	# separate item, so extra or missing copies both lower the score.
+	var req_counts := {}
 	for t in required:
-		if have.has(t):
-			hit += 1
+		req_counts[t] = int(req_counts.get(t, 0)) + 1
+	var have_counts := {}
+	for t in have:
+		have_counts[t] = int(have_counts.get(t, 0)) + 1
+	var hit := 0
+	for t in req_counts:
+		hit += mini(int(req_counts[t]), int(have_counts.get(t, 0)))
 	var denom := maxi(required.size(), have.size())
 	var top := 100.0 if denom == 0 else 100.0 * float(hit) / float(denom)
 	var bake := p.bake_score()
