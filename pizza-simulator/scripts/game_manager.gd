@@ -67,9 +67,15 @@ func finish_knead() -> void:
 
 func new_order() -> void:
 	required.clear()
+	var total := 0
+	# Each pizza gets its own random mix, with the agreed counts as maximums.
 	for t in TOPPINGS:
-		for i in int(ORDER_COUNTS.get(t, 0)):
+		var n := _rng.randi_range(0, int(ORDER_COUNTS.get(t, 0)))
+		for i in n:
 			required.append(t)
+		total += n
+	if total == 0:
+		required.append(str(TOPPINGS[_rng.randi_range(0, TOPPINGS.size() - 1)]))
 	time_left = order_time
 	order_changed.emit()
 

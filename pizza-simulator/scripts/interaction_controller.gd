@@ -498,12 +498,15 @@ func _next_topping(st: KitchenStation) -> String:
 	var need_counts := {}
 	for t in g.required:
 		need_counts[t] = int(need_counts.get(t, 0)) + 1
-	# Hand out the first type whose required count is not met yet, preserving
-	# the order in which the order was built (pepperoni, mushroom, olive).
-	for t in g.required:
-		if int(have_counts.get(t, 0)) < int(need_counts.get(t, 0)):
-			return t
-	return ""
+	# Pick randomly among the types still needed, so the sequence differs from
+	# pizza to pizza even when the final counts are the same.
+	var options: Array[String] = []
+	for t in need_counts:
+		if int(have_counts.get(t, 0)) < int(need_counts[t]):
+			options.append(str(t))
+	if options.is_empty():
+		return ""
+	return options[randi() % options.size()]
 
 func _counter() -> KitchenStation:
 	for s in _all_stations():

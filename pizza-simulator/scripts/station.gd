@@ -89,7 +89,9 @@ func _build() -> void:
 	cs.name = "CollisionShape3D"
 	if kind == Kind.COUNTER:
 		var cyl := CylinderShape3D.new()
-		cyl.radius = COUNTER_RADIUS
+		# Slightly tighter than the visible top so the player can step right
+		# up to the table instead of being held off by an invisible lip.
+		cyl.radius = COUNTER_RADIUS - 0.08
 		cyl.height = _size.y
 		cs.shape = cyl
 	else:

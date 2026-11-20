@@ -54,8 +54,8 @@ A fast-paced pizza making simulation where you must fulfill customer orders by a
    (the station hands you whichever topping your current order still needs)
 2. Return to the PREP_TABLE
 3. Press **L** to drop the topping onto the cheese
-4. Repeat until every topping count in the order is met (6 pepperoni,
-   3 mushroom, 2 olive)
+4. Repeat until every topping count in the order is met. Each order picks a
+   random mix; the station hands you a random type that is still short.
 
 ### Step 5: Bake (OVEN)
 1. Press **G** at the PREP_TABLE to pick the pizza up
@@ -76,13 +76,14 @@ A fast-paced pizza making simulation where you must fulfill customer orders by a
 
 ## 📊 Order System
 
-Each order asks for **quantities** of toppings, not just types:
-- **Pepperoni ×6**
-- **Mushroom ×3**
-- **Olive ×2**
+Each order asks for **quantities** of toppings, not just types, and the exact
+mix is **randomised for every pizza** (up to these maximums):
+- **Pepperoni:** up to 6
+- **Mushroom:** up to 3
+- **Olive:** up to 2
 
-The TOPPINGS station hands you whichever kind still needs more copies, and the
-HUD shows the remaining counts. A missing or extra copy lowers the topping
+The TOPPINGS station hands you a random kind that is still short, and the HUD
+shows each type with its count. A missing or extra copy lowers the topping
 score.
 
 **Time limit:** 5 minutes (300 seconds) per order - enough time to knead the

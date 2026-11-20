@@ -200,7 +200,9 @@ stops a mushroom dropped onto olive/pepperoni from clipping through them; a
 headless check measured pairwise gaps of 0.184–0.305 m after three toppings.
 The cheese shreds were lowered so their top is exactly `0.12`, matching the
 bottom of a topping (`top_y() + TOPPING_HEIGHT/2`), so toppings sit on the
-cheese instead of sinking into it.
+cheese instead of sinking into it. Drops now scatter within `TOPPING_SPREAD =
+0.12` and are clamped near the middle; alternate toppings are stacked one
+topping-thickness higher so the pile stays central without intersecting.
 
 `camera_rig.clear_focus()` now sets a short mouse-settle window. Without it,
 the same circular mouse motions used to spread sauce continued straight into
@@ -213,11 +215,15 @@ chair seat. While eating, **both** arms come up to hold the pizza — the right
 arm's lift delta is negated because its rest offset has the opposite sign.
 
 ### Orders and scoring
-Orders are now **count-based**: `GameManager.ORDER_COUNTS` asks for 6 pepperoni,
-3 mushroom and 2 olive, and `required` holds one entry per item. The topping
-station hands out the next type whose count is still short, `Pizza.toppings`
+Orders are **count-based and randomised per pizza**: `GameManager.ORDER_COUNTS`
+gives the maximums (6 pepperoni, 3 mushroom, 2 olive), `new_order()` rolls a
+count for each type and guarantees at least one topping, and `required` holds
+one entry per item. The topping station hands out a random type whose count is
+still short, `Pizza.toppings`
 keeps duplicates, and scoring compares per-type counts (hit = sum of
-min(required, placed)). 300 s per order.
+min(required, placed)). 300 s per order. Placed toppings were also shrunk to
+`TOPPING_RADIUS 0.065` / `TOPPING_HEIGHT 0.022` so eleven of them fit without
+looking crowded.
 
 `camera_rig` keeps extending `_mouse_settle` while mouse motion continues after
 a close-up, so the circles used to spread sauce can no longer spin the orbit
@@ -276,6 +282,7 @@ an item lands on exactly the declared surfaces and nothing else.
 | `GPUParticles3D.emission_rate` error | Not a valid property | Removed; used `process_material.emission_shape` instead |
 | Project would not run after deleting `.godot` | Assets needed re-importing | `godot --headless --import <project.godot>` |
 | Character sank into the outer counters when walking along the side wall | The movement clamp (`x ±7.2`, `z ≤5.4`) was *wider* than the station footprint, so after `move_and_slide` shoved the capsule out of a counter, the clamp teleported it straight back in | Tightened both `character.gd` and `camera_rig.gd` to `x ±6.6` / `z ≤4.0` — the capsule radius (0.3) short of the counter edges. Also fixed `kitchen_init.gd`, which still placed the serve counter at `x +6` while `main.tscn` has it at `x −6.3` |
+| Chef could not walk close to the customer's table | The symmetric `x ±6.6` / `z ≤4.0` clamp and the round table's full-radius collider held the player back | Bounds are now asymmetric (`x -7.2 … +6.6`, `z ≤4.2`) on the serve side, and the round table's collider is `COUNTER_RADIUS - 0.08` while its visible top stays the same size |
 | Carried pizza clipped through the serve counter | It was held nearly vertical (`rotation −72°`) at chest height, so its near edge dipped below the 1.1 m counter top | Carry pose is now `(0, 1.40, −0.45)` with `−30°` tilt, keeping the lowest point above every counter top |
 | Chef hat filled the kneading close-up | The focus camera sat just behind the player at the same height as the white chef hat, so the hat occluded the dough | Focus camera now sits in front of and above the player (`focus_point + (0, 1.55, −0.85)`), looking steeply down; station labels are hidden during the close-up too |
 | Toppings floated above the pizza after pickup | The drop surface cylinder was *centred* on the pizza's top layer, so its top face was 4 cm higher than the real base; the prep-table surface was also slightly above the pizza | The cylinder centre is now `top_y − height/2` so its top face matches the pizza, and the table surface is omitted whenever a pizza is on the table. `Pizza.attach_topping()` also snaps every topping flat onto the surface (and clamps it inside the base), so a tilted or high drop can never leave the olive hovering |

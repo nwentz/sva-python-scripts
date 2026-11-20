@@ -23,9 +23,10 @@ const ROOM_Z_MAX := 5.9
 # and the counter row starts at z = 4.3. The capsule radius is 0.3, so the
 # centre has to stop short of both or the clamp would push the player back
 # into a station.
-const CHAR_X := 6.6
+const CHAR_X_MIN := -7.2
+const CHAR_X_MAX := 6.6
 const CHAR_Z_MIN := -2.9
-const CHAR_Z_MAX := 4.0
+const CHAR_Z_MAX := 4.2
 
 # Keep the camera this far away from whatever it would otherwise touch.
 const WALL_MARGIN := 0.25
@@ -188,7 +189,7 @@ func _wall_distance() -> float:
 ## camera behind the player and still let them walk up to every station.
 func clamp_target(p: Vector3) -> Vector3:
 	var out := p
-	out.x = clampf(out.x, -CHAR_X, CHAR_X)
+	out.x = clampf(out.x, CHAR_X_MIN, CHAR_X_MAX)
 	out.z = clampf(out.z, CHAR_Z_MIN, CHAR_Z_MAX)
 	return out
 

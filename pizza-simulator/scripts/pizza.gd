@@ -32,10 +32,10 @@ const SAUCE_TOP := 0.09
 const CHEESE_TOP := 0.12
 
 ## Toppings are small discs so several of them fit side by side on the base.
-const TOPPING_RADIUS := 0.09
-const TOPPING_HEIGHT := 0.03
+const TOPPING_RADIUS := 0.065
+const TOPPING_HEIGHT := 0.022
 ## How far from the middle of the pizza a topping may land.
-const TOPPING_SPREAD := 0.21
+const TOPPING_SPREAD := 0.12
 
 @export var bake_time := 0.0
 @export var bake_target := 7.0
@@ -343,14 +343,15 @@ func attach_topping(type: String, world_xform: Transform3D) -> void:
 	_tops.add_child(mi)
 	var local := to_local(world_xform.origin)
 	var offset := Vector2(local.x, local.z)
-	var max_r := DOUGH_RADIUS - TOPPING_RADIUS * 0.45
+	# Keep the pile clustered near the middle rather than scattered to the rim.
+	var max_r := minf(DOUGH_RADIUS - TOPPING_RADIUS, TOPPING_SPREAD + 0.06)
 	if offset.length() > max_r:
 		offset = offset.limit_length(max_r)
 	# Toppings are all flat discs at the same height, so two that land close
 	# together intersect (a mushroom dropped on olive/pepperoni used to clip
 	# through them). Nudge this one away from its neighbours, staying on the
 	# base, until it has its own clear spot.
-	var min_gap := TOPPING_RADIUS * 1.5
+	var min_gap := TOPPING_RADIUS * 1.8
 	for attempt in 6:
 		var moved := false
 		for other in _placed:
@@ -367,9 +368,9 @@ func attach_topping(type: String, world_xform: Transform3D) -> void:
 			break
 		if offset.length() > max_r:
 			offset = offset.limit_length(max_r)
-	# Slight height stagger lets several toppings share a crowded spot without
-	# z-fighting; every one still rests on the cheese surface.
-	var y := top_y() + TOPPING_HEIGHT * 0.5 + float(_placed.size() % 3) * 0.003
+	# Stack alternate layers a topping-thickness apart so several can share
+	# the small central area without intersecting each other or the cheese.
+	var y := top_y() + TOPPING_HEIGHT * 0.5 + float(_placed.size() % 3) * (TOPPING_HEIGHT + 0.002)
 	mi.position = Vector3(offset.x, y, offset.y)
 	mi.rotation = Vector3.ZERO
 	_placed.append(mi)

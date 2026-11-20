@@ -14,9 +14,12 @@ const FRICTION := 15.0
 # Without this the controller's own clamp would shove the player back into
 # the outer stations while they walk along the side wall. These match
 # camera_rig.gd.
-const BOUNDS_X := 6.6
+## Asymmetric: the serve side (-X) is a round table, so the player can walk
+## further out there to stand next to the customer without hitting a counter.
+const BOUNDS_X_MIN := -7.2
+const BOUNDS_X_MAX := 6.6
 const BOUNDS_Z_MIN := -2.9
-const BOUNDS_Z_MAX := 4.0
+const BOUNDS_Z_MAX := 4.2
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
@@ -236,7 +239,7 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 	# Clamp inside the kitchen
-	global_position.x = clampf(global_position.x, -BOUNDS_X, BOUNDS_X)
+	global_position.x = clampf(global_position.x, BOUNDS_X_MIN, BOUNDS_X_MAX)
 	global_position.z = clampf(global_position.z, BOUNDS_Z_MIN, BOUNDS_Z_MAX)
 	# Leave room for the camera behind the player so it never has to sit
 	# inside the character.
