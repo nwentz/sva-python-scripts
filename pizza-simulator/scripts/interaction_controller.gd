@@ -324,9 +324,6 @@ func _all_stations() -> Array:
 					out.append(c)
 	return out
 
-func _station_center(s: KitchenStation) -> Vector3:
-	return s.global_position + Vector3(0, STATION_AIM_HEIGHT, 0)
-
 ## The point on a station the player aims at (the top of its counter).
 func _station_aim(s: KitchenStation) -> Vector3:
 	return s.global_position + Vector3(0, STATION_TOP_HEIGHT, 0)
@@ -507,12 +504,6 @@ func _next_topping(st: KitchenStation) -> String:
 	if options.is_empty():
 		return ""
 	return options[randi() % options.size()]
-
-func _counter() -> KitchenStation:
-	for s in _all_stations():
-		if s.kind == KitchenStation.Kind.COUNTER:
-			return s
-	return null
 
 # --- station use ---
 

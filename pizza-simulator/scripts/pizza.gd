@@ -57,7 +57,6 @@ var cheese_ready := false
 
 var _base: MeshInstance3D
 var _sauce: MeshInstance3D
-var _cheese: MeshInstance3D
 var _tops: Node3D
 var _cheese_shreds: Node3D
 var _melted_layer: MeshInstance3D
@@ -175,12 +174,6 @@ func top_y() -> float:
 	if stage >= Stage.SAUCED:
 		return SAUCE_TOP
 	return DOUGH_TOP
-
-func has_sauce() -> bool:
-	return _sauce != null
-
-func has_cheese() -> bool:
-	return cheese_ready or _cheese != null
 
 ## One press of K. The dough gets smoother with each press and can only be
 ## sauced once it has been kneaded enough.

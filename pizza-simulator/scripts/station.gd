@@ -396,16 +396,6 @@ func _anchor() -> void:
 		add_child(anchor)
 	anchor.position = Vector3(0, _size.y + 0.02, 0)
 
-func _label() -> void:
-	var l := Label3D.new()
-	l.text = metadata["label"]
-	l.position = Vector3(0, 1.0, 0.55)
-	l.font_size = 56
-	l.outline_size = 10
-	l.modulate = Color(1, 1, 1)
-	l.render_priority = 10
-	add_child(l)
-
 func _physics_process(delta: float) -> void:
 	if oven_pizza == null:
 		_announced = false

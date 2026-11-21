@@ -2,7 +2,6 @@ extends Node3D
 ## Builds the whole kitchen at runtime: room, stations, player, camera, HUD.
 
 var _character: Node3D = null
-var _camera_rig: Node3D = null
 
 const CHARACTER := "res://scenes/character.tscn"
 const CAMERA_RIG := "res://scripts/camera_rig.gd"
@@ -314,9 +313,6 @@ func _costume_skirt(top_w: float, bottom_w: float, h: float, t: float) -> ArrayM
 			st.add_vertex(v[i])
 	st.generate_normals()
 	return st.commit()
-
-func _physics_process(delta: float) -> void:
-	pass
 
 func _environment() -> void:
 	print("Creating environment...")
@@ -873,7 +869,6 @@ func _camera(target: Node3D) -> void:
 	rig.name = "CameraRig"
 	rig.set_script(load(CAMERA_RIG))
 	rig.global_position = target.global_position + Vector3(0, 1.55, 0)
-	_camera_rig = rig
 
 	print("Adding camera rig to scene")
 	add_child(rig)

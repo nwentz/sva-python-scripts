@@ -6,7 +6,6 @@ signal order_changed
 signal score_changed(value: int)
 signal hint_changed(text: String)
 signal feedback(text: String, good: bool)
-signal knead_changed(p: Pizza)
 
 const TOPPINGS := ["pepperoni", "mushroom", "olive"]
 ## Orders can ask for several of the same topping. `required` stores one entry
@@ -45,7 +44,6 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if kneading_pizza != null and not is_instance_valid(kneading_pizza):
 		kneading_pizza = null
-		knead_changed.emit(null)
 	if spreading_pizza != null and not is_instance_valid(spreading_pizza):
 		spreading_pizza = null
 	if cutting_cheese != null and not is_instance_valid(cutting_cheese):
@@ -59,11 +57,9 @@ func _process(delta: float) -> void:
 
 func start_knead(p: Pizza) -> void:
 	kneading_pizza = p
-	knead_changed.emit(p)
 
 func finish_knead() -> void:
 	kneading_pizza = null
-	knead_changed.emit(null)
 
 func new_order() -> void:
 	required.clear()

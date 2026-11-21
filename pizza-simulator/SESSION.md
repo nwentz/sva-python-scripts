@@ -342,15 +342,12 @@ Deliberately **excluded** from the commit:
 
 ---
 
-## 7. Known issues / not done
+## 7. Notes
 
-- The character model has no walk animation; the rigged `Low-Poly Character.glb` is tinted
-  flat skin colour and posed in its rest/T-pose.
-- The GLB is tinted uniformly via surface overrides in `main.gd::_tint_skin()`.
-- `scenes/pizza.tscn` and `scripts/pizza_toss.gd` still exist but are unused by the new
-  flow (`Pizza` is instantiated in code).
-- The dropped topping mesh lands wherever physics puts it, but the sauce/cheese layers are
-  full-disc meshes that snap to the pizza rather than keeping the drop pose.
+- The character's walk, gestures and the seated customer are posed procedurally on the
+  imported skeleton; the GLB is coloured per body part in `main.gd::_dress_body()`.
+- Unused legacy scripts (`kitchen_builder.gd`, `pizza_toss.gd`, `station_data.gd`) and
+  scenes (`pizza.tscn`, `ui_hud.tscn`) were removed; `Pizza` and the HUD are created in code.
 - `GameManager` autoload UID is referenced as `uid://dj84sgqt4m5h7` in `project.godot`.
 - `__pycache__/` remains untracked in the repo root; consider adding it to `.gitignore`.
 

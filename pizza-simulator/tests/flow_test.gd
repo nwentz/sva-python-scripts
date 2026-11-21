@@ -6,7 +6,6 @@ var main: Node3D
 var char: CharacterBody3D
 var rig: Node3D
 var inter: Node
-var log_lines: Array[String] = []
 
 func _ready() -> void:
 	await _run()

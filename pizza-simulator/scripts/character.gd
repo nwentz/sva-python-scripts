@@ -5,7 +5,6 @@ const SPEED := 5.0
 const JUMP_VELOCITY := 4.5
 const SPRINT_SPEED := 8.0
 const ACCELERATION := 10.0
-const FRICTION := 15.0
 
 # Keep the character inside the kitchen. The bounds must leave the player
 # able to walk up to every station (the outermost counters sit at x = +-6.3
