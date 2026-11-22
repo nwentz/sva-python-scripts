@@ -200,10 +200,12 @@ func _dress_model(root: Node3D) -> void:
 			var strap := Transform3D(Basis.from_euler(Vector3(deg_to_rad(-10), 0,
 				deg_to_rad(14) * side)), Vector3(0.085 * side, 1.68, 0.15))
 			_bone_mesh(hips, _costume_box(Vector3(0.035, 0.15, 0.02)), APRON_RED, strap, "ApronStrap")
-			# Continue round the side of the neck to the back.
+			# Continue round the side of the neck to the back. This piece has
+			# to span the whole gap between the front strap (z 0.15) and the
+			# bow at the back (z -0.11), otherwise the tie looks detached.
 			var around := Transform3D(Basis.from_euler(Vector3(0,
-				atan2(-0.05 * side, -0.18), 0)), Vector3(0.065 * side, 1.72, 0.03))
-			_bone_mesh(hips, _costume_box(Vector3(0.022, 0.022, 0.19)), APRON_RED,
+				atan2(-0.02 * side, -0.27), 0)), Vector3(0.078 * side, 1.715, 0.02))
+			_bone_mesh(hips, _costume_box(Vector3(0.026, 0.026, 0.30)), APRON_RED,
 				around, "ApronNeckSide")
 			# A loop of the bow behind the neck.
 			var loop := Transform3D(Basis.from_euler(Vector3(0, 0,
@@ -217,10 +219,15 @@ func _dress_model(root: Node3D) -> void:
 		# The knot that holds the bunny bow together.
 		_bone_mesh(hips, _costume_box(Vector3(0.04, 0.032, 0.03)), APRON_RED,
 			Transform3D(Basis(), Vector3(0, 1.715, -0.108)), "ApronBowKnot")
-		# A band around the neck, like the waist band, tying the bib straps
-		# and the bow together into one continuous apron.
-		_bone_mesh(hips, _costume_box(Vector3(0.10, 0.035, 0.11)), APRON_RED,
-			Transform3D(Basis(), Vector3(0, 1.70, 0.0)), "ApronNeckBand")
+		# A closed ring around the neck, so the tie reads as one band wrapping
+		# the sides instead of a flat bar that stops in mid-air.
+		var collar := TorusMesh.new()
+		collar.inner_radius = 0.095
+		collar.outer_radius = 0.125
+		collar.rings = 10
+		collar.ring_segments = 16
+		_bone_mesh(hips, collar, APRON_RED,
+			Transform3D(Basis(), Vector3(0, 1.705, 0.0)), "ApronNeckBand")
 		# The waist tie is a closed loop: the bow is tied at the back, but the
 		# band itself runs all the way round the sides and front of the shirt.
 		_bone_mesh(hips, _costume_box(Vector3(0.292, 0.042, 0.276)), APRON_RED,
