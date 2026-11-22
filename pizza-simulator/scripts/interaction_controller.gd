@@ -633,14 +633,24 @@ func _drop_pizza(p: Pizza, table: KitchenStation) -> void:
 	p.reparent(table.anchor, false)
 	p.position = Vector3.ZERO
 	p.rotation_degrees = Vector3.ZERO
-	# The dough has to be kneaded before anything can go on it. Zoom in and
-	# hand control to the K-key minigame until it is worked enough.
-	GameManager.start_knead(p)
-	_set_station_labels(false)
-	var rig := _camera_rig()
-	if rig != null and rig.has_method("focus_on"):
-		rig.focus_on(p)
-	GameManager.set_hint("Press K to knead the dough (0/%d)." % Pizza.KNEADS_REQUIRED)
+	# Only raw dough needs the knead close-up. Putting a pizza that has
+	# already been kneaded back down must NOT re-enter that state: K would do
+	# nothing, kneading_pizza would never clear, and G/L would stay blocked so
+	# the pizza could not be picked up again.
+	if not p.kneaded:
+		GameManager.start_knead(p)
+		_set_station_labels(false)
+		var rig := _camera_rig()
+		if rig != null and rig.has_method("focus_on"):
+			rig.focus_on(p)
+		GameManager.set_hint("Press K to knead the dough (0/%d)." % Pizza.KNEADS_REQUIRED)
+	else:
+		# A finished pizza keeps the normal camera. Leaving the knead close-up
+		# active would swallow every input, so it could not be picked back up.
+		var rig := _camera_rig()
+		if rig != null and rig.has_method("clear_focus"):
+			rig.clear_focus()
+		GameManager.set_hint("Pizza on the table - press G to pick it up.")
 
 ## The surfaces a dropped item can land on. While a pizza is on the table the
 ## table top is deliberately omitted: its top face sits slightly *above* the

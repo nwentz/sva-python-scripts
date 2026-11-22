@@ -56,6 +56,10 @@ func _process(delta: float) -> void:
 		new_order()
 
 func start_knead(p: Pizza) -> void:
+	# A finished pizza has nothing to knead; accepting it here would strand
+	# the game in the close-up state with no way to finish it.
+	if p == null or p.kneaded:
+		return
 	kneading_pizza = p
 
 func finish_knead() -> void:
