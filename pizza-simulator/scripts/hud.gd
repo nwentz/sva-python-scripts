@@ -21,10 +21,18 @@ func _ready() -> void:
 	_oven = _mk(24, 176, 900, 40, 22)
 	_knead = _mk(24, 218, 900, 44, 26)
 	_knead.add_theme_color_override("font_color", Color(1.0, 0.86, 0.35))
-	_hands = _mk(24, 618, 900, 40, 20)
-	_hint = _mk(24, 660, 1140, 44, 20)
-	_keys = _mk(24, 584, 1140, 34, 16)
-	_flash = _mk(0, 300, 1280, 60, 32)
+	# The bottom block is anchored to the viewport bottom. Fixed y values used
+	# to push the hints and hotkeys off the bottom of 16:9 windows.
+	_hands = _mk(24, 0, 900, 40, 20)
+	_hint = _mk(24, 0, 1120, 48, 20)
+	_keys = _mk(24, 0, 1120, 52, 15)
+	_flash = _mk(0, 300, 1152, 60, 32)
+	_bottom(_keys, 104.0, 52.0)
+	_bottom(_hands, 56.0, 40.0)
+	_bottom(_hint, 4.0, 48.0)
+	# Centre feedback on the real viewport instead of a fixed 1280-wide box.
+	_flash.anchor_right = 1.0
+	_flash.offset_right = 0.0
 	_timer_bar = ColorRect.new()
 	_timer_bar.size = Vector2(0, 4)
 	_timer_bar.position = Vector2(24, 148)
@@ -32,7 +40,10 @@ func _ready() -> void:
 	_timer_bar.modulate = Color(0.4, 0.8, 1)
 	add_child(_timer_bar)
 	_flash.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_keys.text = "G = grab/interact     L = drop/start minigames     K = knead     MOUSE = spread sauce     C = cut cheese     WASD = move     SHIFT = sprint     SPACE = jump     ESC = free mouse"
+	_keys.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_keys.text = ("G = grab / interact    L = drop / start minigames    K = knead    C = cut cheese\n"
+		+ "MOUSE = spread sauce    WASD = move    SHIFT = sprint    SPACE = jump    ESC = free mouse")
 
 	GameManager.order_changed.connect(_refresh)
 	GameManager.hands_changed.connect(_refresh)
@@ -51,6 +62,14 @@ func _mk(x: float, y: float, w: float, h: float, sz: int) -> Label:
 	l.theme_type_variation = "LabelBlackBoard"
 	add_child(l)
 	return l
+
+
+## Pin a label's bottom edge `margin` pixels above the bottom of the viewport.
+func _bottom(l: Label, margin: float, h: float) -> void:
+	l.anchor_top = 1.0
+	l.anchor_bottom = 1.0
+	l.offset_top = -margin - h
+	l.offset_bottom = -margin
 
 func _refresh() -> void:
 	var g := GameManager

@@ -78,9 +78,20 @@ func setup(t: Node3D) -> void:
 		camera.rotation_degrees = Vector3(-8, 0, 0)
 		add_child(camera)
 	camera.make_current()
+	capture_mouse()
+	print("Camera rig set up, mouse captured")
+
+## The title screen frees the pointer so the player can click its button.
+## These two helpers keep that hand-off (and the settle time after re-capture)
+## in one place so a warp never spins the camera on the first frame of play.
+func release_mouse() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func capture_mouse() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_mouse_settle = 30
-	print("Camera rig set up, mouse captured")
+
 
 func _unhandled_input(e: InputEvent) -> void:
 	# The kneading close-up is a short cinematic beat: the player cannot orbit

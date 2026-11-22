@@ -131,6 +131,12 @@ func _ready() -> void:
 		root.add_child(b)
 	add_child(canvas)
 
+	# Title screen sits above everything else and keeps the cursor free until
+	# the player clicks PRESS PLAY or presses Enter.
+	var title_ps: PackedScene = load("res://scenes/title_screen.tscn")
+	if title_ps != null:
+		add_child(title_ps.instantiate())
+
 	print("=== Setup Complete ===")
 
 func _dress_body(root: Node) -> void:
@@ -514,7 +520,6 @@ func _back_wall() -> void:
 	var z := WALL_Z_MAX
 	# Tiled splashback running the length of the counter.
 	_panel(Vector3(0, 1.55, z - 0.03), Vector3(14.6, 0.95, 0.06), Color(0.88, 0.87, 0.83), "Splashback")
-	_panel(Vector3(0, 2.06, z - 0.05), Vector3(14.6, 0.06, 0.10), Color(0.55, 0.42, 0.30), "SplashbackRail")
 
 	# Wall clock.
 	var cx := -0.4
