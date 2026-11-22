@@ -515,11 +515,9 @@ func _door() -> void:
 	add_child(lamp)
 	print("Door added")
 
-## Tiles, a clock, a menu board and a shelf on the wall behind the counters.
+## A clock, a menu board and a shelf on the wall behind the counters.
 func _back_wall() -> void:
 	var z := WALL_Z_MAX
-	# Tiled splashback running the length of the counter.
-	_panel(Vector3(0, 1.55, z - 0.03), Vector3(14.6, 0.95, 0.06), Color(0.88, 0.87, 0.83), "Splashback")
 
 	# Wall clock.
 	var cx := -0.4
