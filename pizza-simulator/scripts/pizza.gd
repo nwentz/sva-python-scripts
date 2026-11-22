@@ -336,16 +336,15 @@ func attach_topping(type: String, world_xform: Transform3D) -> void:
 	_tops.add_child(mi)
 	var local := to_local(world_xform.origin)
 	var offset := Vector2(local.x, local.z)
-	# Keep the pile clustered near the middle rather than scattered to the rim.
-	var max_r := minf(DOUGH_RADIUS - TOPPING_RADIUS, TOPPING_SPREAD + 0.06)
+	# Keep the pile near the middle, but allow the full base so a big order
+	# fits in one layer instead of piling up in mid-air.
+	var max_r := minf(DOUGH_RADIUS - TOPPING_RADIUS, TOPPING_SPREAD + 0.12)
 	if offset.length() > max_r:
 		offset = offset.limit_length(max_r)
-	# Toppings are all flat discs at the same height, so two that land close
-	# together intersect (a mushroom dropped on olive/pepperoni used to clip
-	# through them). Nudge this one away from its neighbours, staying on the
-	# base, until it has its own clear spot.
-	var min_gap := TOPPING_RADIUS * 1.8
-	for attempt in 6:
+	# Toppings are flat discs: nudge this one away from its neighbours until
+	# it has its own clear spot on the base.
+	var min_gap := TOPPING_RADIUS * 2.0 + 0.004
+	for attempt in 12:
 		var moved := false
 		for other in _placed:
 			if not is_instance_valid(other):
@@ -361,9 +360,16 @@ func attach_topping(type: String, world_xform: Transform3D) -> void:
 			break
 		if offset.length() > max_r:
 			offset = offset.limit_length(max_r)
-	# Stack alternate layers a topping-thickness apart so several can share
-	# the small central area without intersecting each other or the cheese.
-	var y := top_y() + TOPPING_HEIGHT * 0.5 + float(_placed.size() % 3) * (TOPPING_HEIGHT + 0.002)
+	# Rest on the cheese by default. Only climb onto a neighbour when this
+	# spot is still occupied - and then sit directly on it, so no topping is
+	# ever left hovering with empty space underneath.
+	var y := top_y() + TOPPING_HEIGHT * 0.5
+	for other in _placed:
+		if not is_instance_valid(other):
+			continue
+		var diff := offset - Vector2(other.position.x, other.position.z)
+		if diff.length() < TOPPING_RADIUS * 2.0:
+			y = maxf(y, other.position.y + TOPPING_HEIGHT + 0.002)
 	mi.position = Vector3(offset.x, y, offset.y)
 	mi.rotation = Vector3.ZERO
 	_placed.append(mi)

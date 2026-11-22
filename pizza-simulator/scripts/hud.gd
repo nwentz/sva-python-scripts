@@ -34,10 +34,11 @@ func _ready() -> void:
 	_flash.anchor_right = 1.0
 	_flash.offset_right = 0.0
 	_timer_bar = ColorRect.new()
-	_timer_bar.size = Vector2(0, 4)
-	_timer_bar.position = Vector2(24, 148)
+	_timer_bar.size = Vector2(0, 6)
+	# Sit below the time label (which ends around y 156) so the bar never
+	# cuts through the text.
+	_timer_bar.position = Vector2(24, 162)
 	_timer_bar.z_index = -1
-	_timer_bar.modulate = Color(0.4, 0.8, 1)
 	add_child(_timer_bar)
 	_flash.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_keys.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -138,15 +139,24 @@ func _process(delta: float) -> void:
 		else:
 			_knead.text = ""
 
-	# Update timer bar
+	# Update timer bar: shrinks and shifts from green to yellow to red.
 	_timer_t = GameManager.time_left / GameManager.order_time
 	_timer_bar.size.x = 760 * _timer_t
+	_timer_bar.color = _timer_color(_timer_t)
 
 	# Flash feedback
 	if _flash_t > 0.0:
 		_flash_t -= delta
 		if _flash_t <= 0.0:
 			_flash.text = ""
+
+## Full time is green, halfway yellow, and the last stretch red.
+func _timer_color(t: float) -> Color:
+	t = clampf(t, 0.0, 1.0)
+	if t <= 0.5:
+		return Color(0.92, 0.20, 0.18).lerp(Color(1.0, 0.82, 0.15), t * 2.0)
+	return Color(1.0, 0.82, 0.15).lerp(Color(0.25, 0.85, 0.35), (t - 0.5) * 2.0)
+
 
 func _stage_name(s: int) -> String:
 	return {
@@ -163,4 +173,4 @@ func _on_feedback(text: String, good: bool) -> void:
 	_flash.text = text
 	_flash.add_theme_color_override("font_color", Color(0.4, 1.0, 0.45) if good else Color(1, 0.45, 0.4))
 	_flash_t = 4.0
-	_timer_bar.modulate = Color(1, 1, 1, 1) if good else Color(1, 0.4, 0.4)
+	# The bar's colour is owned by the countdown, so don't tint it here.
