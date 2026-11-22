@@ -77,7 +77,6 @@ func _build_ui() -> void:
 	_play.add_theme_color_override("font_hover_color", Color(1, 1, 1))
 	_play.add_theme_font_size_override("font_size", 42)
 	_place(_play, 0.0, 30.0, 380.0, 96.0)
-	_play.pivot_offset = Vector2(190.0, 48.0)
 	_play.pressed.connect(_start)
 	_root.add_child(_play)
 
@@ -150,10 +149,11 @@ func _input(e: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if _started or _play == null:
 		return
-	# A gentle pulse makes PRESS PLAY obvious without being distracting.
+	# The button never moves: it just swells in brightness to draw the eye.
+	# Values above 1 brighten the red face, gold border and label together.
 	_t += delta
-	var s := 1.0 + 0.025 * sin(_t * 3.2)
-	_play.scale = Vector2(s, s)
+	var glow := 0.5 + 0.5 * sin(_t * 2.2)
+	_play.modulate = Color(1.0 + 0.3 * glow, 0.92 + 0.24 * glow, 0.82 + 0.18 * glow)
 
 
 func _start() -> void:
