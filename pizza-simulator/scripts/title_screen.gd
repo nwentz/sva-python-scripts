@@ -182,7 +182,6 @@ func _build_rulebook_overlay() -> void:
 		+ "MOUSE spread sauce\n"
 		+ "WASD  move\n"
 		+ "SHIFT sprint\n"
-		+ "SPACE jump\n"
 		+ "ESC   free mouse", 44.0, 20))
 	book.add_child(_page("HOW TO PLAY", "1  Take dough from the DOUGH stand.\n"
 		+ "2  Knead it with K, then set it\n"
@@ -291,11 +290,11 @@ func _input(e: InputEvent) -> void:
 		var k := (e as InputEventKey).keycode
 		if _book_open:
 			# While reading, keys only dismiss the book - never start the game.
-			if k == KEY_ESCAPE or k == KEY_ENTER or k == KEY_KP_ENTER or k == KEY_SPACE:
+			if k == KEY_ESCAPE or k == KEY_ENTER or k == KEY_KP_ENTER:
 				_close_rulebook()
 			get_viewport().set_input_as_handled()
 			return
-		if k == KEY_ENTER or k == KEY_KP_ENTER or k == KEY_SPACE:
+		if k == KEY_ENTER or k == KEY_KP_ENTER:
 			_start()
 			get_viewport().set_input_as_handled()
 		elif k == KEY_ESCAPE:

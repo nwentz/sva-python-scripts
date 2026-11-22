@@ -43,7 +43,6 @@ in-editor MCP dock and an `MCPRuntimeServer` autoload registered in `project.god
 | **ESC** | Toggle the mouse; inside a close-up it cancels the minigame and returns to the normal camera |
 | WASD / arrows | Move (on-screen D-pad bottom-right also works) |
 | SHIFT | Sprint |
-| SPACE | Jump |
 | ESC | Free the mouse |
 
 `E` was replaced by `G` ("grab"); `D` was rejected for drop because it conflicts with

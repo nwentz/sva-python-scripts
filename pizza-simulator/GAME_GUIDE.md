@@ -12,7 +12,6 @@ A fast-paced pizza making simulation where you must fulfill customer orders by a
 | **Move Left** | A |
 | **Move Right** | D |
 | **Sprint** | SHIFT |
-| **Jump** | SPACE |
 | **Look Around** | Mouse |
 | **Interact / Grab** | G or Left Click |
 | **Drop item / pizza** | L |

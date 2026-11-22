@@ -1,8 +1,7 @@
 extends CharacterBody3D
-## Base character controller. WASD move (camera-relative), Space jump.
+## Base character controller. WASD move (camera-relative), Shift sprint.
 
 const SPEED := 5.0
-const JUMP_VELOCITY := 4.5
 const SPRINT_SPEED := 8.0
 const ACCELERATION := 10.0
 
@@ -200,8 +199,6 @@ func _physics_process(delta: float) -> void:
 		return
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
-	elif Input.is_key_pressed(KEY_SPACE):
-		velocity.y = JUMP_VELOCITY
 
 	# Movement input
 	var input := ui_input

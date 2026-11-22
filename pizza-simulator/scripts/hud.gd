@@ -43,7 +43,7 @@ func _ready() -> void:
 	_keys.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_keys.text = ("G = grab / interact    L = drop / start minigames    K = knead    C = cut cheese\n"
-		+ "MOUSE = spread sauce    WASD = move    SHIFT = sprint    SPACE = jump    ESC = free mouse")
+		+ "MOUSE = spread sauce    WASD = move    SHIFT = sprint    ESC = free mouse")
 
 	GameManager.order_changed.connect(_refresh)
 	GameManager.hands_changed.connect(_refresh)
